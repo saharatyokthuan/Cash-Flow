@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>BUDGET//CTRL (Local Storage)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-header">
+  <h1>BUDGET<span>//</span>CTRL <span style="font-size:0.5rem;color:var(--gold);margin-left:0.5rem;">💾 OFFLINE MODE</span></h1>
+  <nav class="nav-grid">
+    <button class="nav-btn active" onclick="showPage('page-home',this)">
+      <span class="nav-icon">📋</span>บันทึก
+    </button>
+    <button class="nav-btn" onclick="showPage('page-wallet',this)">
+      <span class="nav-icon">👛</span>บัญชี
+    </button>
+    <button class="nav-btn" onclick="showPage('page-loan',this)">
+      <span class="nav-icon">🤝</span>ยืม-คืน
+    </button>
+    <button class="nav-btn" onclick="showPage('page-install',this)">
+      <span class="nav-icon">💳</span>สินเชื่อ
+    </button>
+    <button class="nav-btn" onclick="showPage('page-category',this)">
+      <span class="nav-icon">🏷️</span>หมวดหมู่
+    </button>
+    <button class="nav-btn" onclick="showPage('page-summary',this)">
+      <span class="nav-icon">📊</span>Dashboard
+    </button>
+    <button class="nav-btn" onclick="showPage('page-budget',this)">
+      <span class="nav-icon">🎯</span>ตั้งงบประมาณล่วงหน้า
+    </button>
+  </nav>
+</div>
+
+<!-- หน้า Home (บันทึกรายรับ-รายจ่าย) -->
+<div class="page active" id="page-home">
+  <div class="page-title">// CASH FLOW</div>
+  <div class="page-sub" id="monthLabel"></div>
+  <div class="summary-grid">
+    <div class="s-card income">
+      <div class="sc-label">รายรับ</div>
+      <div class="sc-amount" id="totalIncome">0</div>
+    </div>
+    <div class="s-card expense">
+      <div class="sc-label">รายจ่าย</div>
+      <div class="sc-amount" id="totalExpense">0</div>
+    </div>
+    <div class="s-card balance">
+      <div class="sc-label">คงเหลือ</div>
+      <div class="sc-amount" id="balance">0</div>
+    </div>
+  </div>
+
+  <div class="cp-form">
+    <input type="date" id="dateInput">
+    <input type="text" id="nameInput" placeholder="รายการ">
+    <div class="note-toggle">
+      <button type="button" id="noteToggleBtn" onclick="toggleNoteInput()">📝 เพิ่มหมายเหตุ</button>
+      <input type="text" id="noteInput" placeholder="พิมพ์หมายเหตุที่นี่" style="display:none;">
+    </div>
+    <input type="number" id="amountInput" placeholder="จำนวนเงิน (฿)" min="0">
+    <select id="typeSelect">
+      <option value="income">▲ รายรับ</option>
+      <option value="expense">▼ รายจ่าย</option>
+    </select>
+    <select id="walletSelect"></select>
+    <select id="categorySelect"></select>
+    <button class="btn-neon" onclick="addItem()">+ เพิ่มรายการ</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn-tool" onclick="downloadCSV()">⬇ EXPORT CSV</button>
+    <button class="btn-tool" onclick="clearAll()">🗑 ล้างข้อมูล</button>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="🔍 ค้นหารายการ...">
+  </div>
+
+  <div class="filter">
+    <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
+    <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
+  </div>
+
+  <div class="wallet-bar" id="walletFilterBar"></div>
+  <div class="list-header" id="listHeader">รายการ</div>
+  <div id="list"></div>
+</div>
+
+<!-- หน้ากระเป๋าเงิน -->
+<div class="page" id="page-wallet">
+  <div class="page-title">// WALLETS</div>
+  <div class="page-sub">จัดการกระเป๋าเงินและโอนระหว่างบัญชี</div>
+
+  <div class="cp-form">
+    <input type="text" id="walletNameInput" placeholder="ชื่อบัญชี เช่น เงินสด, PromptPay, กสิกร">
+    <input type="number" id="walletInitInput" placeholder="ยอดเริ่มต้น (฿)" min="0" value="0">
+    <button class="btn-neon" onclick="addWallet()">+ เพิ่มบัญชี</button>
+  </div>
+
+  <div class="section-title">สรุปยอดทุกบัญชี</div>
+  <div class="wsc-grid" id="walletSummary"></div>
+
+  <div class="section-title">โอนเงินระหว่างบัญชี</div>
+  <div class="transfer-form">
+    <select id="transferFrom"></select>
+    <select id="transferTo"></select>
+    <input type="number" id="transferAmount" placeholder="จำนวนเงิน (฿)" min="0">
+    <input type="text" id="transferNote" placeholder="หมายเหตุ">
+    <button class="btn-neon" onclick="doTransfer()">↔ โอนเงิน</button>
+  </div>
+
+  <div class="section-title">รายการบัญชี</div>
+  <div id="walletList"></div>
+</div>
+
+<!-- หน้ายืม-คืน -->
+<div class="page" id="page-loan">
+  <div class="page-title">// LOAN TRACKER</div>
+  <div class="page-sub">สรุปจากหมวด "ยืม" (รายรับ) และ "คืน" (รายจ่าย)</div>
+
+  <div class="grid-2">
+    <div class="stat-card red">
+      <div class="lc-label">💸 ยืมมาทั้งหมด</div>
+      <div class="lc-amount" id="loanTotalBorrow">0 ฿</div>
+    </div>
+    <div class="stat-card green">
+      <div class="lc-label">✅ คืนไปแล้ว</div>
+      <div class="lc-amount" id="loanTotalRepaid">0 ฿</div>
+    </div>
+  </div>
+
+  <div class="balance-row">
+    <span class="sb-label">🔴 ยังค้างอยู่</span>
+    <span class="sb-amount" id="loanTotalRemain">0 ฿</span>
+  </div>
+
+  <div class="loan-tabs">
+    <button class="loan-tab active" onclick="setLoanTab('person',this)">👤 รายคน</button>
+    <button class="loan-tab" onclick="setLoanTab('list',this)">📋 รายการ</button>
+  </div>
+
+  <div class="list-header" id="loanListHeader">สรุปรายคน</div>
+  <div id="loanList"></div>
+</div>
+
+<!-- หน้าสินเชื่อ/ผ่อน -->
+<div class="page" id="page-install">
+  <div class="page-title">// INSTALLMENT</div>
+  <div class="page-sub">ติดตามยอดผ่อนมือถือ & สินเชื่อ</div>
+
+  <div class="grid-2">
+    <div class="stat-card blue">
+      <div class="lc-label">📱 มือถือคงค้าง</div>
+      <div class="lc-amount" id="instPhoneTotal">0 ฿</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="lc-label">💰 PayNext คงค้าง</div>
+      <div class="lc-amount" id="instPaynextTotal">0 ฿</div>
+    </div>
+  </div>
+
+  <div class="inst-tabs">
+    <button class="inst-tab active" onclick="setInstTab('phone',this)">📱 มือถือ</button>
+    <button class="inst-tab" onclick="setInstTab('paynext',this)">💰 PayNext</button>
+  </div>
+
+  <div class="cp-form" id="instForm">
+    <input type="text" id="instName" placeholder="ชื่อรายการ">
+    <input type="number" id="instTotal" placeholder="ยอดกู้ / ราคา" min="0">
+    <input type="number" id="instMonthly" placeholder="ผ่อนต่อเดือน" min="0">
+    <input type="number" id="instTerms" placeholder="จำนวนงวดทั้งหมด" min="1">
+    <input type="number" id="instPaid" placeholder="จ่ายไปแล้วกี่งวด" min="0" value="0">
+    <input type="date" id="instDate">
+    <input type="text" id="instNote" placeholder="หมายเหตุ">
+    <button class="btn-neon" id="instAddBtn" onclick="addInstallment()">+ เพิ่มรายการผ่อน</button>
+  </div>
+
+  <div class="list-header" id="instListHeader">รายการ</div>
+  <div id="instList"></div>
+</div>
+
+<!-- หน้าหมวดหมู่ -->
+<div class="page" id="page-category">
+  <div class="page-title">// CATEGORIES</div>
+  <div class="page-sub">เพิ่ม-ลบหมวดหมู่ตามต้องการ</div>
+  <button class="btn-reset" onclick="resetCategories()">🔄 รีเซ็ตหมวดเริ่มต้น</button>
+  <div class="cat-tabs">
+    <button class="cat-tab active" onclick="setCatTab('income',this)">▲ รายรับ</button>
+    <button class="cat-tab" onclick="setCatTab('expense',this)">▼ รายจ่าย</button>
+  </div>
+  <div class="cat-add-row">
+    <input type="text" id="catNameInput" placeholder="ชื่อหมวดใหม่">
+    <button onclick="addCategory()">+ เพิ่ม</button>
+  </div>
+  <div id="catList"></div>
+</div>
+
+<!-- หน้า Dashboard -->
+<div class="page" id="page-summary">
+  <div class="page-title">// DASHBOARD</div>
+  <div class="page-sub">ภาพรวมการเงินรายเดือน</div>
+  <div class="month-sel-wrap">
+    <select id="sumMonthSelect" onchange="renderSummary()"></select>
+  </div>
+  <div class="sum-cards">
+    <div class="sum-card income">
+      <div class="sc-label">รายรับ</div>
+      <div class="sc-amount" id="sumIncome">0</div>
+    </div>
+    <div class="sum-card expense">
+      <div class="sc-label">รายจ่าย</div>
+      <div class="sc-amount" id="sumExpense">0</div>
+    </div>
+  </div>
+  <div class="balance-row">
+    <span class="sb-label">คงเหลือเดือนนี้</span>
+    <span class="sb-amount" id="sumBalance">0</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">// BAR CHART — แยกหมวด</div>
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="setChartTab('expense',this)">▼ รายจ่าย</button>
+      <button class="chart-tab" onclick="setChartTab('income',this)">▲ รายรับ</button>
+    </div>
+    <canvas id="barCanvas" height="200"></canvas>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">// DONUT CHART — สัดส่วน</div>
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="setDonutTab('expense',this)">▼ รายจ่าย</button>
+      <button class="chart-tab" onclick="setDonutTab('income',this)">▲ รายรับ</button>
+    </div>
+    <canvas id="donutCanvas" height="200"></canvas>
+    <div class="donut-legend" id="donutLegend"></div>
+  </div>
+  <div class="section-title">รายจ่ายแยกหมวด</div>
+  <div id="expenseBar"></div>
+  <div class="section-title">รายรับแยกหมวด</div>
+  <div id="incomeBar"></div>
+  <div class="section-title">รายจ่ายสูงสุด 5 อันดับ</div>
+  <div id="topExpense"></div>
+  <div class="section-title">สถานะหนี้ (ทุกเดือน)</div>
+  <div class="balance-row">
+    <span class="sb-label">ยอดค้างทั้งหมด (ยืม − คืน)</span>
+    <span class="sb-amount" id="summaryLoanRemain" style="color:var(--red)">0 ฿</span>
+  </div>
+</div>
+
+<!-- หน้าตั้งงบประมาณล่วงหน้า (รวม Upcoming) -->
+<div class="page" id="page-budget">
+  <div class="page-title">// BUDGET vs ACTUAL</div>
+  <div class="page-sub">ตั้งงบประมาณล่วงหน้า เทียบกับจ่ายจริง</div>
+
+  <!-- เลือกเดือน -->
+  <div class="month-sel-wrap">
+    <select id="budgetMonthSelect" onchange="renderBudgetPage()"></select>
+  </div>
+
+  <!-- ฟอร์มตั้งงบประมาณ -->
+  <div class="cp-form">
+    <select id="budgetCategorySelect">
+      <option value="">-- เลือกหมวดรายจ่าย --</option>
+    </select>
+    <input type="number" id="budgetAmountInput" placeholder="วงเงินงบประมาณ (฿)" min="0">
+    <button class="btn-neon" onclick="addBudget()">+ ตั้งงบประมาณ</button>
+  </div>
+
+  <!-- สรุปภาพรวม -->
+  <div class="section-title">ภาพรวมเดือนนี้</div>
+  <div class="summary-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="s-card expense">
+      <div class="sc-label">งบรวม</div>
+      <div class="sc-amount" id="budgetTotalAmount">0</div>
+    </div>
+    <div class="s-card income">
+      <div class="sc-label">ใช้ไปแล้ว</div>
+      <div class="sc-amount" id="budgetTotalSpent">0</div>
+    </div>
+  </div>
+
+  <!-- รายการงบแต่ละหมวด -->
+  <div class="list-header" id="budgetListHeader">รายการงบประมาณ</div>
+  <div id="budgetList"></div>
+
+  <!-- ส่วนรายการคาดการณ์ล่วงหน้า -->
+  <div class="section-title">📅 รายการที่คาดว่าจะจ่ายในเดือนนี้</div>
+  <div class="cp-form">
+    <input type="text" id="upcomingName" placeholder="รายการ">
+    <input type="number" id="upcomingAmount" placeholder="จำนวนเงิน (฿)" min="0">
+    <select id="upcomingCategorySelect">
+      <option value="">-- หมวดหมู่ --</option>
+    </select>
+    <button class="btn-neon" onclick="addUpcomingFromBudget()">+ เพิ่มรายการคาดการณ์</button>
+  </div>
+  <div id="upcomingBudgetList"></div>
+</div>
+
+<!-- Modal สำหรับแก้ไขรายการ -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>✏ EDIT_ITEM</h2>
+    <input type="hidden" id="editId">
+    <div class="modal-row"><label>วันที่</label><input type="date" id="editDate"></div>
+    <div class="modal-row"><label>รายการ</label><input type="text" id="editName"></div>
+    <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="editNote"></div>
+    <div class="modal-row"><label>จำนวนเงิน</label><input type="number" id="editAmount" min="0"></div>
+    <div class="modal-row"><label>ประเภท</label><select id="editType"><option value="income">▲ รายรับ</option><option value="expense">▼ รายจ่าย</option></select></div>
+    <div class="modal-row"><label>หมวดหมู่</label><select id="editCategory"></select></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-save" onclick="saveEdit()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal สำหรับจ่ายค่างวด -->
+<div class="modal-bg" id="instPayModalBg">
+  <div class="modal">
+    <h2 id="instPayTitle">💳 PAY_INSTALLMENT</h2>
+    <input type="hidden" id="instPayId">
+    <div class="modal-row"><label>จำนวนงวดที่จ่าย</label><input type="number" id="instPayQty" min="1" value="1"></div>
+    <div class="modal-row"><label>วันที่จ่าย</label><input type="date" id="instPayDate"></div>
+    <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="instPayNote"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeInstPayModal()">ยกเลิก</button>
+      <button class="btn-save" onclick="saveInstPay()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
