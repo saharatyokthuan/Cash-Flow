@@ -18,8 +18,8 @@ const DEFAULT_DATA = {
   ],
   installments: [],
   categories: {
-    income: ['เงินเดือน','ฟรีแลนซ์','ลงทุน','โบนัส','ขายของ','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ช้อปปิ้ง','สุขภาพ','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
+    income: ['เงินเดือน','ยืม','อื่นๆ'],
+    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
   },
   budgets: [],
   upcoming: []
@@ -519,8 +519,8 @@ function addCategory(){
 
 function deleteCategory(type,name){
   const DEFAULT_CATS = {
-    income: ['เงินเดือน','ฟรีแลนซ์','ลงทุน','โบนัส','ขายของ','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ช้อปปิ้ง','สุขภาพ','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
+    income: ['เงินเดือน','ยืม','อื่นๆ'],
+    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
   };
   if(DEFAULT_CATS[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
   window.categories[type] = window.categories[type].filter(c=>c!==name);
@@ -531,8 +531,8 @@ function deleteCategory(type,name){
 
 function resetCategories(){
   const DEFAULT_CATS = {
-    income: ['เงินเดือน','ฟรีแลนซ์','ลงทุน','โบนัส','ขายของ','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ช้อปปิ้ง','สุขภาพ','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
+    income: ['เงินเดือน','ยืม','อื่นๆ'],
+    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
   };
   window.categories = { income: [...DEFAULT_CATS.income], expense: [...DEFAULT_CATS.expense] };
   saveLocalStorage();
@@ -545,8 +545,8 @@ function renderCatList(){
   const el = document.getElementById('catList');
   const cats = window.categories[catTab] || [];
   const DEFAULT_CATS = {
-    income: ['เงินเดือน','ฟรีแลนซ์','ลงทุน','โบนัส','ขายของ','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ช้อปปิ้ง','สุขภาพ','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
+    income: ['เงินเดือน','ยืม','อื่นๆ'],
+    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
   };
   if(!cats.length){ el.innerHTML='<div class="empty">— ยังไม่มีหมวดหมู่ —</div>'; return; }
   el.innerHTML = cats.map(c=>`<div class="cat-item"><span>${c}${DEFAULT_CATS[catTab].includes(c)?'<span class="ci-default">default</span>':''}</span><button class="btn-cat-del" onclick="deleteCategory('${catTab}','${c}')">✕</button></div>`).join('');
