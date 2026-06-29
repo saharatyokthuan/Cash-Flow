@@ -9,7 +9,8 @@
 <body>
 
 <div class="app-header">
-  <h1>Manage<span>//</span>Cash Flow <span id="currentDate" class="header-date"></span></h1>
+  <h1>Manage<span>//</span>Cash Flow <span id="currentDate" class="header-date"> 
+  </span></h1>
   <nav class="nav-grid">
     <button class="nav-btn active" onclick="showPage('page-home',this)"><span class="nav-icon">📝</span>HOME</button>
     <button class="nav-btn" onclick="showPage('page-wallet',this)"><span class="nav-icon">💲</span>WALLET</button>
@@ -23,10 +24,7 @@
 </div>
 
 <!--Homepage (INCOME-EXPENSES) -->
-<div class="page active" id="page-home">
-  <div class="page-title">︎homepage</div>
-  <div class="page-sub" id="monthLabel"></div>
-  <div class="summary-grid">
+<div class="summary-grid">
     <div class="s-card income">
       <div class="sc-label">รายรับ</div>
       <div class="sc-amount" id="totalIncome">0</div>
@@ -40,14 +38,17 @@
       <div class="sc-amount" id="balance">0</div>
     </div>
   </div>
+<div class="page active" id="page-home">
+  <div class="page-title">︎homepage</div>
+  <div class="page-sub" id="monthLabel"></div>
 
   <div class="cp-form">
     <input type="date" id="dateInput">
     <input type="text" id="nameInput" placeholder="รายการ">
     <input type="number" id="amountInput" placeholder="จำนวนเงิน" min="0">
     <select id="typeSelect">
-      <option value="income"> รายรับ </option>
-      <option value="expense"> รายจ่าย </option>
+      <option value="income">รายรับ</option>
+      <option value="expense">รายจ่าย</option>
     </select>
     <select id="walletSelect"></select>
     <select id="categorySelect"></select>
@@ -64,6 +65,16 @@
     <button class="btn-tool" onclick="showPage('page-search',this)">🔍 ค้นหารายการ</button>
   </div>
 
+  <!-- ✅ เพิ่ม filter และ wallet-bar กลับมา -->
+  <div class="filter">
+    <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
+    <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
+  </div>
+
+  <div class="wallet-bar" id="walletFilterBar"></div>
+  <div class="list-header" id="listHeader">รายการ</div>
+  <div id="list"></div>
 </div>
 
 <!-- หน้ากระเป๋าเงิน -->
@@ -209,7 +220,7 @@
       <button class="chart-tab active" onclick="setDonutTab('expense',this)">▼ รายจ่าย</button>
       <button class="chart-tab" onclick="setDonutTab('income',this)">▲ รายรับ</button>
     </div>
-    <canvas id="donutCanvas" height="200"></canvas>
+    <canvas id="donutCanvas" height="300"></canvas>
     <div class="donut-legend" id="donutLegend"></div>
   </div>
   <div class="section-title">รายจ่ายแยกหมวด</div>
@@ -269,18 +280,25 @@
   <div id="upcomingBudgetList"></div>
 </div>
 
-<!-- หน้า SEARCH -->
+<!-- ===== หน้า SEARCH (แก้ไขแล้ว) ===== -->
 <div class="page" id="page-search">
   <div class="page-title">// SEARCH</div>
   <div class="page-sub">ค้นหารายการจากชื่อ, หมายเหตุ, หรือหมวดหมู่</div>
 
-  <div class="search-wrap" style="margin-bottom:1rem;">
-    <input type="text" id="searchInputPage" placeholder="พิมพ์คำค้น...">
-    <button class="btn-neon" onclick="searchItems()" style="margin-top:0.5rem;">🔍 ค้นหา</button>
+  <div class="search-wrap">
+    <input type="text" id="searchInputPage" placeholder="🔍 พิมพ์คำค้น...">
   </div>
 
+  <!-- ✅ เพิ่ม filter และ wallet-bar ในหน้า search -->
+  <div class="filter">
+    <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
+    <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
+  </div>
+
+  <div class="wallet-bar" id="walletFilterBarSearch"></div>
   <div class="list-header" id="searchListHeader">ผลลัพธ์</div>
-  <div id="searchResults"></div>
+  <div id="searchList"></div>
 </div>
 
 <!-- Modal แก้ไขรายการ -->
@@ -318,7 +336,7 @@
   </div>
 </div>
 
-<!-- ===== CONFIRM MODAL (ใหม่) ===== -->
+<!-- ===== CONFIRM MODAL ===== -->
 <div class="modal-bg" id="confirmModalBg">
   <div class="modal" style="max-width:340px;">
     <h2 id="confirmTitle" style="color:var(--red);">⚠️ ยืนยันการดำเนินการ</h2>
