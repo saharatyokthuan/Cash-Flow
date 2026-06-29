@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Sarabun:wght@300;400;600;700&family=Share+Tech+Mono&family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Noto+Sans+Thai:wdth,wght@76.6,100..900&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
 
 :root {
-  --bg:        #080a0e;
+  --bg:        #000000;
   --bg2:       #0d1018;
   --bg3:       #121620;
   --panel:     #0f1320;
@@ -13,10 +13,9 @@
   --red:       #ff4f64;
   --blue:      #4f9bff;
   --amber:     #f0a30a;
-  --text:      #cdd4e0;
+  --text:      #ffffff;
   --muted:     #4a5568;
-  --mono:      'Share Tech Mono', monospace;
-  --sans:      'Sarabun', system-ui, sans-serif;
+  --sans:      'Charm', monospace , system-ui, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,18 +50,28 @@ body::before {
   box-shadow: 0 2px 20px rgba(200,168,75,0.12);
 }
 .app-header h1 {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 1.15rem;
   color: var(--gold);
   letter-spacing: 0.15em;
   text-shadow: 0 0 12px rgba(200,168,75,0.6), 0 0 30px rgba(200,168,75,0.2);
   margin-bottom: 0.65rem;
 }
+.app-header h1 span.header-date {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--gold-glow);
+  margin-left: 0.6rem;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+  text-shadow: 0 0 8px rgba(240, 201, 74, 0.3);
+}
 .app-header h1 span { color: var(--muted); }
 
+/* ── FIX: 7 columns for 7 nav buttons ── */
 .nav-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 0.3rem;
 }
 .nav-btn {
@@ -92,7 +101,7 @@ body::before {
 .page.active { display: block; }
 
 .page-title {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 0.75rem;
   color: var(--gold);
   letter-spacing: 0.2em;
@@ -102,14 +111,14 @@ body::before {
 .page-sub {
   font-size: 0.65rem;
   color: var(--muted);
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 0.5rem;
-  margin-bottom: 1.2rem;
+  margin-bottom:2rem;
 }
 .s-card {
   background: var(--panel);
@@ -129,7 +138,7 @@ body::before {
 .s-card.expense::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
 .s-card.balance::before { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .s-card .sc-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
-.s-card .sc-amount { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; }
+.s-card .sc-amount { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; }
 .s-card.income .sc-amount { color: var(--green); }
 .s-card.expense .sc-amount { color: var(--red); }
 .s-card.balance .sc-amount { color: var(--gold); text-shadow: 0 0 8px rgba(200,168,75,0.4); }
@@ -168,7 +177,7 @@ body::before {
   background: transparent;
   color: var(--gold);
   font-size: 0.92rem;
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-weight: 600;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -241,7 +250,7 @@ body::before {
 }
 
 .list-header {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 0.6rem;
   color: var(--muted);
   letter-spacing: 0.15em;
@@ -263,9 +272,9 @@ body::before {
 .item.income { border-left-color: var(--green); }
 .item.expense { border-left-color: var(--red); }
 .item-left .name { font-size: 0.85rem; font-weight: 500; }
-.item-left .meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.12rem; font-family: var(--mono); }
+.item-left .meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.12rem; font-family: var(--sans); }
 .item-right { display: flex; align-items: center; gap: 0.7rem; }
-.item-right .amount { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; }
+.item-right .amount { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; }
 .item.income .amount { color: var(--green); }
 .item.expense .amount { color: var(--red); }
 .btn-del { background: none; border: none; color: var(--muted); font-size: 0.9rem; cursor: pointer; padding: 0.2rem; }
@@ -282,7 +291,7 @@ body::before {
 }
 
 .section-title {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 0.6rem;
   color: var(--gold-dim);
   text-transform: uppercase;
@@ -314,7 +323,7 @@ body::before {
 .stat-card.blue::before { background: var(--blue); }
 .stat-card.amber::before { background: var(--amber); }
 .stat-card .lc-label { font-size: 0.6rem; color: var(--muted); margin-bottom: 0.4rem; }
-.stat-card .lc-amount { font-family: var(--mono); font-size: 0.95rem; font-weight: 700; }
+.stat-card .lc-amount { font-family: var(--sans); font-size: 0.95rem; font-weight: 700; }
 .stat-card.red .lc-amount { color: var(--red); }
 .stat-card.green .lc-amount { color: var(--green); }
 .stat-card.blue .lc-amount { color: var(--blue); }
@@ -329,7 +338,7 @@ body::before {
   margin-bottom: 1rem;
 }
 .balance-row .sb-label { font-size: 0.75rem; color: var(--muted); }
-.balance-row .sb-amount { font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--gold); }
+.balance-row .sb-amount { font-family: var(--sans); font-size: 1rem; font-weight: 700; color: var(--gold); }
 
 .person-card {
   background: var(--panel);
@@ -342,14 +351,14 @@ body::before {
 .person-card.cleared { border-left-color: var(--green); opacity: 0.85; }
 .person-top { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
 .person-name { font-weight: 600; font-size: 0.88rem; }
-.person-remain { font-family: var(--mono); font-weight: 700; color: var(--red); }
+.person-remain { font-family: var(--sans); font-weight: 700; color: var(--red); }
 .person-card.cleared .person-remain { color: var(--green); }
 .person-prog { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 0.3rem; overflow: hidden; }
 .person-prog-fill { height: 100%; background: linear-gradient(90deg, var(--red), #ff8fa0); transition: width 0.3s; }
 .person-card.cleared .person-prog-fill { background: linear-gradient(90deg, var(--green), #8ff0c0); }
-.person-prog-text { font-size: 0.62rem; color: var(--muted); font-family: var(--mono); }
+.person-prog-text { font-size: 0.62rem; color: var(--muted); font-family: var(--sans); }
 .person-txns { border-top: 1px solid var(--border); margin-top: 0.5rem; padding-top: 0.5rem; }
-.person-txn-row { display: flex; justify-content: space-between; font-size: 0.65rem; font-family: var(--mono); padding: 0.15rem 0; }
+.person-txn-row { display: flex; justify-content: space-between; font-size: 0.65rem; font-family: var(--sans); padding: 0.15rem 0; }
 .loan-done-badge { font-size: 0.58rem; background: rgba(57,217,138,0.12); color: var(--green); border-radius: 3px; padding: 0.1rem 0.4rem; }
 
 .inst-item {
@@ -362,24 +371,24 @@ body::before {
 }
 .inst-item.paynext { border-left-color: var(--amber); }
 .inst-name { font-size: 0.88rem; font-weight: 600; }
-.inst-meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.1rem; font-family: var(--mono); }
-.inst-remain { font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--blue); }
+.inst-meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.1rem; font-family: var(--sans); }
+.inst-remain { font-family: var(--sans); font-size: 1rem; font-weight: 700; color: var(--blue); }
 .inst-item.paynext .inst-remain { color: var(--amber); }
 .inst-progress { height: 4px; background: var(--border); border-radius: 2px; margin: 0.4rem 0 0.25rem; overflow: hidden; }
 .inst-fill { height: 100%; background: linear-gradient(90deg, var(--blue), #8fc0ff); transition: width 0.3s; }
 .inst-item.paynext .inst-fill { background: linear-gradient(90deg, var(--amber), #ffd080); }
-.inst-progress-text { font-size: 0.62rem; color: var(--muted); font-family: var(--mono); }
+.inst-progress-text { font-size: 0.62rem; color: var(--muted); font-family: var(--sans); }
 .inst-detail { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.35rem; margin: 0.55rem 0; }
 .inst-stat { background: var(--bg2); border-radius: 5px; padding: 0.4rem; text-align: center; }
 .inst-stat-label { font-size: 0.52rem; color: var(--muted); margin-bottom: 0.2rem; }
-.inst-stat-val { font-family: var(--mono); font-size: 0.78rem; }
+.inst-stat-val { font-family: var(--sans); font-size: 0.78rem; }
 .inst-actions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
 .btn-pay { flex: 1; padding: 0.45rem; border-radius: 6px; border: 1px solid rgba(57,217,138,0.3); background: rgba(57,217,138,0.08); color: var(--green); font-size: 0.78rem; cursor: pointer; }
 .btn-pay:active { background: rgba(57,217,138,0.2); }
 .btn-del-sm { padding: 0.45rem 0.65rem; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.78rem; }
 .inst-done-badge { font-size: 0.58rem; background: rgba(57,217,138,0.12); color: var(--green); border-radius: 3px; padding: 0.1rem 0.4rem; }
 .pay-history { margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.4rem; }
-.pay-row { display: flex; justify-content: space-between; font-size: 0.62rem; font-family: var(--mono); color: var(--muted); padding: 0.12rem 0; }
+.pay-row { display: flex; justify-content: space-between; font-size: 0.62rem; font-family: var(--sans); color: var(--muted); padding: 0.12rem 0; }
 .pr-amount { color: var(--green); }
 
 .month-sel-wrap { margin-bottom: 1rem; }
@@ -394,7 +403,7 @@ body::before {
 .sum-card.income { border-top: 1px solid var(--green); }
 .sum-card.expense { border-top: 1px solid var(--red); }
 .sc-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
-.sc-amount { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; }
+.sc-amount { font-family: var(--sans); font-size: 1.05rem; font-weight: 700; }
 .sum-card.income .sc-amount { color: var(--green); }
 .sum-card.expense .sc-amount { color: var(--red); }
 .bar-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
@@ -403,14 +412,14 @@ body::before {
 .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 .bar-fill.income { background: linear-gradient(90deg, var(--green), #8ff0c0); }
 .bar-fill.expense { background: linear-gradient(90deg, var(--red), #ff8fa0); }
-.bar-val { width: 65px; text-align: right; font-size: 0.65rem; color: var(--muted); font-family: var(--mono); }
+.bar-val { width: 65px; text-align: right; font-size: 0.65rem; color: var(--muted); font-family: var(--sans); }
 .top-item {
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 7px; padding: 0.6rem 0.85rem;
   margin-bottom: 0.4rem;
   display: flex; justify-content: space-between;
 }
-.ti-amount { font-family: var(--mono); color: var(--red); font-size: 0.85rem; }
+.ti-amount { font-family: var(--sans); color: var(--red); font-size: 0.85rem; }
 
 .cat-add-row { display: flex; gap: 0.5rem; margin-bottom: 0.9rem; }
 .cat-add-row input {
@@ -461,7 +470,7 @@ body::before {
   width: 100%; max-width: 360px;
   max-height: 90vh; overflow-y: auto;
 }
-.modal h2 { font-family: var(--mono); font-size: 0.9rem; color: var(--gold); margin-bottom: 1rem; letter-spacing: 0.1em; }
+.modal h2 { font-family: var(--sans); font-size: 0.9rem; color: var(--gold); margin-bottom: 1rem; letter-spacing: 0.1em; }
 .modal-row { margin-bottom: 0.6rem; }
 .modal-row label { font-size: 0.65rem; color: var(--muted); display: block; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .modal-row input, .modal-row select {
@@ -485,7 +494,7 @@ body::before {
 .wallet-chip {
   flex-shrink: 0; padding: 0.3rem 0.75rem; border-radius: 20px;
   border: 1px solid var(--border); background: var(--bg3);
-  color: var(--muted); font-size: 0.7rem; font-family: var(--mono);
+  color: var(--muted); font-size: 0.7rem; font-family: var(--sans);
   cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
 .wallet-chip.active { border-color: var(--gold); background: rgba(200,168,75,0.12); color: var(--gold); }
@@ -495,8 +504,8 @@ body::before {
   display: flex; justify-content: space-between; align-items: center;
 }
 .wc-name { font-weight: 600; font-size: 0.88rem; }
-.wc-bal { font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--gold); }
-.wc-meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.15rem; font-family: var(--mono); }
+.wc-bal { font-family: var(--sans); font-size: 1rem; font-weight: 700; color: var(--gold); }
+.wc-meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.15rem; font-family: var(--sans); }
 .btn-wallet-del { background: none; border: none; color: var(--muted); font-size: 0.85rem; cursor: pointer; padding: 0.2rem 0.4rem; }
 .btn-wallet-del:active { color: var(--red); }
 .transfer-form {
@@ -518,7 +527,7 @@ body::before {
 }
 .wsc-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--gold-dim); }
 .wsc-name { font-size: 0.6rem; color: var(--muted); margin-bottom: 0.3rem; }
-.wsc-bal { font-family: var(--mono); font-size: 0.95rem; font-weight: 700; color: var(--gold); }
+.wsc-bal { font-family: var(--sans); font-size: 0.95rem; font-weight: 700; color: var(--gold); }
 
 .loan-tabs, .inst-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.9rem; }
 
@@ -530,7 +539,7 @@ body::before {
   box-shadow: 0 0 14px rgba(200,168,75,0.2);
   color: var(--gold);
   padding: 0.5rem 1.2rem; border-radius: 20px;
-  font-size: 0.8rem; font-family: var(--mono);
+  font-size: 0.8rem; font-family: var(--sans);
   opacity: 0; transition: all 0.2s; z-index: 200;
   white-space: nowrap; pointer-events: none;
   letter-spacing: 0.05em;
@@ -540,7 +549,7 @@ body::before {
 .empty {
   text-align: center; color: var(--muted);
   font-size: 0.82rem; padding: 2rem 0;
-  font-family: var(--mono); letter-spacing: 0.05em;
+  font-family: var(--sans); letter-spacing: 0.05em;
 }
 
 .chart-wrap {
@@ -551,7 +560,7 @@ body::before {
   margin-bottom: 0.8rem;
 }
 .chart-title {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 0.62rem;
   color: var(--muted);
   text-transform: uppercase;
