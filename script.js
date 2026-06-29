@@ -64,7 +64,11 @@ function loadDefault() {
   window.items = [...DEFAULT_DATA.items];
   window.wallets = [...DEFAULT_DATA.wallets];
   window.installments = [...DEFAULT_DATA.installments];
-  window.categories = {...DEFAULT_DATA.categories};
+  // FIX: deep copy nested arrays ป้องกัน shared reference
+  window.categories = {
+    income: [...DEFAULT_DATA.categories.income],
+    expense: [...DEFAULT_DATA.categories.expense]
+  };
   window.budgets = [...DEFAULT_DATA.budgets];
   window.upcoming = [...DEFAULT_DATA.upcoming];
   saveLocalStorage();
@@ -72,18 +76,25 @@ function loadDefault() {
 }
 
 // ── 6. HELPERS ──
-function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+// FIX: เพิ่ม " และ ' ใน escapeHtml ป้องกัน XSS ใน attribute
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[m]);
+}
+
 function showToast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('dateInput').value = today;
 document.getElementById('instDate').value = today;
 document.getElementById('instPayDate').value = today;
-document.getElementById('monthLabel').innerText = new Date().toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+document.getElementById('monthLabel').innerText = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
 
 function updateCategoryDropdown(type, selectId, cur='') {
   const sel = document.getElementById(selectId);
-  if(sel) sel.innerHTML = (window.categories[type] || []).map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  if(sel) sel.innerHTML = (window.categories[type] || []).map(c=>`<option value="${escapeHtml(c)}" ${c===cur?'selected':''}>${escapeHtml(c)}</option>`).join('');
 }
 
 document.getElementById('typeSelect').addEventListener('change', function(){ updateCategoryDropdown(this.value,'categorySelect'); });
@@ -100,13 +111,23 @@ function getWalletBalance(walletId) {
 
 function updateWalletDropdowns() {
   const wallets = window.wallets || [];
-  const opts = wallets.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-  ['walletSelect','transferFrom','transferTo'].forEach(id => {
+  const opts = wallets.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+  ['walletSelect','transferFrom','transferTo','instPayWallet'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
   const tTo = document.getElementById('transferTo');
   if (tTo && wallets.length > 1) tTo.value = wallets[1].id;
+}
+
+// FIX: เพิ่ม populate editWallet dropdown
+function updateEditWalletDropdown(currentWalletId) {
+  const wallets = window.wallets || [];
+  const sel = document.getElementById('editWallet');
+  if (!sel) return;
+  sel.innerHTML = wallets.map(w =>
+    `<option value="${w.id}" ${w.id === currentWalletId ? 'selected' : ''}>${escapeHtml(w.name)}</option>`
+  ).join('');
 }
 
 function renderWalletFilterBar() {
@@ -117,7 +138,7 @@ function renderWalletFilterBar() {
   let html = `<button class="wallet-chip ${allActive ? 'active' : ''}" onclick="setWalletFilter('all',this)">ทั้งหมด</button>`;
   wallets.forEach(w => {
     const active = window.walletFilter === w.id;
-    html += `<button class="wallet-chip ${active ? 'active' : ''}" onclick="setWalletFilter(${w.id},this)">${w.name}</button>`;
+    html += `<button class="wallet-chip ${active ? 'active' : ''}" onclick="setWalletFilter(${w.id},this)">${escapeHtml(w.name)}</button>`;
   });
   bar.innerHTML = html;
 }
@@ -142,7 +163,7 @@ function toggleNoteInput() {
   } else {
     input.style.display = 'none';
     input.value = '';
-    btn.textContent = '📝 เพิ่มหมายเหตุ';
+    btn.textContent = 'หมายเหตุ';
   }
 }
 
@@ -162,7 +183,7 @@ function addItem(){
   document.getElementById('amountInput').value='';
   const noteInp = document.getElementById('noteInput');
   noteInp.value=''; noteInp.style.display='none';
-  document.getElementById('noteToggleBtn').textContent = '📝 เพิ่มหมายเหตุ';
+  document.getElementById('noteToggleBtn').textContent = 'หมายเหตุ';
   renderList();
 }
 
@@ -200,6 +221,8 @@ function openEdit(id){
   document.getElementById('editAmount').value = item.amount;
   document.getElementById('editType').value = item.type;
   updateCategoryDropdown(item.type,'editCategory',item.category);
+  // FIX: populate editWallet dropdown พร้อม select wallet ปัจจุบัน
+  updateEditWalletDropdown(item.walletId);
   document.getElementById('modalBg').classList.add('open');
 }
 
@@ -212,6 +235,8 @@ function saveEdit(){
   const amount = parseFloat(document.getElementById('editAmount').value);
   const name = document.getElementById('editName').value.trim();
   if(!name||isNaN(amount)||amount<=0) return showToast('ข้อมูลไม่ถูกต้อง');
+  // FIX: อ่านค่า walletId จาก modal ด้วย
+  const walletId = parseInt(document.getElementById('editWallet').value) || window.items[idx].walletId;
   window.items[idx] = {
     ...window.items[idx],
     date: document.getElementById('editDate').value,
@@ -219,11 +244,13 @@ function saveEdit(){
     note: document.getElementById('editNote').value.trim(),
     amount,
     type: document.getElementById('editType').value,
-    category: document.getElementById('editCategory').value
+    category: document.getElementById('editCategory').value,
+    walletId
   };
   saveLocalStorage();
   closeModal();
   renderList();
+  showToast('บันทึกแล้ว');
 }
 
 function downloadCSV(){
@@ -261,11 +288,12 @@ function renderList(){
   const c=document.getElementById('list');
   if(!filtered.length){ c.innerHTML='<div class="empty">— ไม่พบรายการ —</div>'; return; }
   const wallets = window.wallets || [];
+  // FIX: escapeHtml note ก่อนใส่ใน innerHTML
   c.innerHTML=[...filtered].reverse().map(i=>`
     <div class="item ${i.type}">
       <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
         <div class="name">${escapeHtml(i.name)}${i.note?`<span class="note-chip">${escapeHtml(i.note)}</span>`:''}</div>
-        <div class="meta">${i.date} · ${i.category||''} · ${wallets.find(w=>w.id===i.walletId)?.name||''}</div>
+        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category||'')} · ${escapeHtml(wallets.find(w=>w.id===i.walletId)?.name||'')}</div>
       </div>
       <div class="item-right">
         <div class="amount">${i.type==='income'?'+':'-'}${i.amount.toLocaleString()}</div>
@@ -289,6 +317,17 @@ function addWallet() {
   updateWalletDropdowns();
   renderWalletFilterBar();
   showToast('เพิ่มบัญชีแล้ว');
+}
+
+function displayCurrentDate() {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  const formattedDate = `${day}/${month}/${year}`;
+ 
+  document.getElementById('currentDate').textContent = ` [${formattedDate}]`;
+    
 }
 
 function deleteWallet(id) {
@@ -329,7 +368,7 @@ function renderWalletPage() {
   if (grid) {
     grid.innerHTML = wallets.map(w => {
       const bal = getWalletBalance(w.id);
-      return `<div class="wsc-card"><div class="wsc-name">${w.name}</div><div class="wsc-bal" style="color:${bal>=0?'var(--gold)':'var(--red)'}">${bal.toLocaleString()} ฿</div></div>`;
+      return `<div class="wsc-card"><div class="wsc-name">${escapeHtml(w.name)}</div><div class="wsc-bal" style="color:${bal>=0?'var(--gold)':'var(--red)'}">${bal.toLocaleString()} ฿</div></div>`;
     }).join('');
   }
   const list = document.getElementById('walletList');
@@ -339,7 +378,7 @@ function renderWalletPage() {
       const bal = getWalletBalance(w.id);
       const txCount = window.items.filter(i => i.walletId === w.id).length;
       return `<div class="wallet-card">
-        <div><div class="wc-name">👛 ${w.name}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init||0).toLocaleString()} ฿</div></div>
+        <div><div class="wc-name">👛 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init||0).toLocaleString()} ฿</div></div>
         <div style="display:flex;align-items:center;gap:0.7rem">
           <div class="wc-bal" style="color:${bal>=0?'var(--gold)':'var(--red)'}">${bal.toLocaleString()} ฿</div>
           ${wallets.length > 1 ? `<button class="btn-wallet-del" onclick="deleteWallet(${w.id})">✕</button>` : ''}
@@ -370,7 +409,17 @@ function renderLoan(){
   if(loanDisplayMode==='list'){
     document.getElementById('loanListHeader').innerText = `รายการทั้งหมด (${borrows.length+repays.length})`;
     const all = [...borrows.map(i=>({...i,ltype:'borrow'})), ...repays.map(i=>({...i,ltype:'repay'}))].sort((a,b)=>b.date.localeCompare(a.date));
-    document.getElementById('loanList').innerHTML = all.length ? all.map(i=>`<div class="item ${i.ltype==='borrow'?'income':'expense'}"><div class="item-left" style="flex:1"><div class="name">${escapeHtml(i.name)}<span style="font-size:0.62rem;color:var(--muted)"> ${i.ltype==='borrow'?'(ยืม)':'(คืน)'}</span></div><div class="meta">${i.date}${i.note?' · '+i.note:''}</div></div><div class="item-right"><div class="amount" style="color:${i.ltype==='borrow'?'var(--red)':'var(--green)'}">${i.ltype==='borrow'?'+':'-'}${i.amount.toLocaleString()}</div></div></div>`).join('') : '<div class="empty">— ไม่มีรายการ —</div>';
+    // FIX: escapeHtml i.note ใน loan list mode
+    document.getElementById('loanList').innerHTML = all.length ? all.map(i=>`
+      <div class="item ${i.ltype==='borrow'?'income':'expense'}">
+        <div class="item-left" style="flex:1">
+          <div class="name">${escapeHtml(i.name)}<span style="font-size:0.62rem;color:var(--muted)"> ${i.ltype==='borrow'?'(ยืม)':'(คืน)'}</span></div>
+          <div class="meta">${escapeHtml(i.date)}${i.note?' · '+escapeHtml(i.note):''}</div>
+        </div>
+        <div class="item-right">
+          <div class="amount" style="color:${i.ltype==='borrow'?'var(--red)':'var(--green)'}">${i.ltype==='borrow'?'+':'-'}${i.amount.toLocaleString()}</div>
+        </div>
+      </div>`).join('') : '<div class="empty">— ไม่มีรายการ —</div>';
   } else {
     document.getElementById('loanListHeader').innerText = 'สรุปรายคน';
     const persons = new Map();
@@ -382,7 +431,13 @@ function renderLoan(){
       const rem = Math.max(data.borrow-data.repay,0);
       const pct = data.borrow>0?Math.min((data.repay/data.borrow)*100,100).toFixed(0):100;
       const cleared = rem<=0;
-      const rows = [...data.txns].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<div class="person-txn-row"><span>${t.ltype==='borrow'?'📥 ยืม':'📤 คืน'}</span><span>${t.date}</span><span style="color:${t.ltype==='borrow'?'var(--red)':'var(--green)'}">${t.ltype==='borrow'?'+':'-'}${t.amount.toLocaleString()} ฿</span></div>`).join('');
+      // FIX: escapeHtml note ใน txn rows
+      const rows = [...data.txns].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`
+        <div class="person-txn-row">
+          <span>${t.ltype==='borrow'?'📥 ยืม':'📤 คืน'}</span>
+          <span>${escapeHtml(t.date)}</span>
+          <span style="color:${t.ltype==='borrow'?'var(--red)':'var(--green)'}">${t.ltype==='borrow'?'+':'-'}${t.amount.toLocaleString()} ฿</span>
+        </div>`).join('');
       return `<div class="person-card ${cleared?'cleared':''}">
         <div class="person-top"><span class="person-name">${escapeHtml(name)} ${cleared?'<span class="loan-done-badge">✓ เคลียร์</span>':''}</span><span class="person-remain">${rem.toLocaleString()} ฿</span></div>
         <div class="person-prog"><div class="person-prog-fill" style="width:${pct}%"></div></div>
@@ -432,6 +487,8 @@ function openInstPayModal(id){
   document.getElementById('instPayDate').value = today;
   document.getElementById('instPayNote').value = '';
   document.getElementById('instPayTitle').innerText = `💳 จ่ายงวด ${inst.name} (เหลือ ${remTerms} งวด × ${inst.monthly.toLocaleString()} ฿)`;
+  // FIX: populate wallet dropdown ใน modal ผ่อนชำระ
+  updateWalletDropdowns();
   document.getElementById('instPayModalBg').classList.add('open');
 }
 
@@ -442,24 +499,29 @@ function saveInstPay(){
   const qty = parseInt(document.getElementById('instPayQty').value);
   const date = document.getElementById('instPayDate').value||today;
   const note = document.getElementById('instPayNote').value.trim();
+  // FIX: อ่าน walletId จาก modal แทนการ hardcode wallets[0]
+  const walletId = parseInt(document.getElementById('instPayWallet').value) || (window.wallets[0]?.id || 1);
   if(isNaN(qty)||qty<1) return showToast('กรุณากรอกจำนวนงวด');
   const inst = window.installments.find(i=>i.id===id);
   if(!inst) return;
   const remTerms = inst.terms - inst.paidTerms;
   if(qty>remTerms) return showToast(`จ่ายได้สูงสุด ${remTerms} งวด`);
-  
+
   inst.paidTerms += qty;
-  inst.payments.push({id:Date.now(),qty,amount:qty*inst.monthly,date,note});
-  
+
+  // FIX: ใช้ timestamp เดียวกัน หลีกเลี่ยง ID collision
+  const now = Date.now();
+  inst.payments.push({ id: now, qty, amount: qty * inst.monthly, date, note });
+
   window.items.push({
-    id: Date.now(),
+    id: now + 1,
     name: `ผ่อนชำระ: ${inst.name} (งวดที่ ${inst.paidTerms})`,
     amount: qty * inst.monthly,
     type: 'expense',
-    date: date,
+    date,
     note: note || `จ่ายผ่อนชำระ ${qty} งวด`,
     category: inst.type === 'phone' ? 'ผ่อนมือถือ' : 'ผ่อนสินเชื่อ',
-    walletId: window.wallets[0]?.id || 1
+    walletId
   });
 
   saveLocalStorage();
@@ -479,14 +541,15 @@ function renderInstallment(){
   document.getElementById('instListHeader').innerText = instTab==='phone'?`ผ่อนมือถือ (${filtered.length})`:`PayNext (${filtered.length})`;
   const container = document.getElementById('instList');
   if(!filtered.length){ container.innerHTML='<div class="empty">— ยังไม่มีรายการ —</div>'; return; }
+  // FIX: escapeHtml note ใน installment render
   container.innerHTML = [...filtered].reverse().map(inst=>{
     const paidTerms = inst.paidTerms, remTerms = inst.terms-paidTerms;
     const pct = Math.min((paidTerms/inst.terms)*100,100).toFixed(0);
     const done = remTerms<=0;
-    const payRows = inst.payments.length ? `<div class="pay-history">${inst.payments.map(p=>`<div class="pay-row"><span>${p.date} · ${p.qty} งวด${p.note?' · '+p.note:''}</span><span class="pr-amount">+${p.amount.toLocaleString()} ฿</span></div>`).join('')}</div>` : '';
+    const payRows = inst.payments.length ? `<div class="pay-history">${inst.payments.map(p=>`<div class="pay-row"><span>${escapeHtml(p.date)} · ${p.qty} งวด${p.note?' · '+escapeHtml(p.note):''}</span><span class="pr-amount">+${p.amount.toLocaleString()} ฿</span></div>`).join('')}</div>` : '';
     return `<div class="inst-item ${inst.type}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="inst-name">${escapeHtml(inst.name)} ${done?'<span class="inst-done-badge">✓ ผ่อนหมด</span>':''}</div><div class="inst-meta">${inst.date}${inst.note?' · '+inst.note:''}</div></div>
+        <div><div class="inst-name">${escapeHtml(inst.name)} ${done?'<span class="inst-done-badge">✓ ผ่อนหมด</span>':''}</div><div class="inst-meta">${escapeHtml(inst.date)}${inst.note?' · '+escapeHtml(inst.note):''}</div></div>
         <div class="inst-remain">${(remTerms*inst.monthly).toLocaleString()} ฿</div>
       </div>
       <div class="inst-progress"><div class="inst-fill" style="width:${pct}%"></div></div>
@@ -518,11 +581,8 @@ function addCategory(){
 }
 
 function deleteCategory(type,name){
-  const DEFAULT_CATS = {
-    income: ['เงินเดือน','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
-  };
-  if(DEFAULT_CATS[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
+  // FIX: ใช้ DEFAULT_DATA แทน hardcode ซ้ำ
+  if(DEFAULT_DATA.categories[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
   window.categories[type] = window.categories[type].filter(c=>c!==name);
   saveLocalStorage();
   renderCatList();
@@ -530,11 +590,11 @@ function deleteCategory(type,name){
 }
 
 function resetCategories(){
-  const DEFAULT_CATS = {
-    income: ['เงินเดือน','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
+  // FIX: ใช้ DEFAULT_DATA แทน hardcode ซ้ำ
+  window.categories = {
+    income: [...DEFAULT_DATA.categories.income],
+    expense: [...DEFAULT_DATA.categories.expense]
   };
-  window.categories = { income: [...DEFAULT_CATS.income], expense: [...DEFAULT_CATS.expense] };
   saveLocalStorage();
   renderCatList();
   updateCategoryDropdown('income','categorySelect');
@@ -544,12 +604,13 @@ function resetCategories(){
 function renderCatList(){
   const el = document.getElementById('catList');
   const cats = window.categories[catTab] || [];
-  const DEFAULT_CATS = {
-    income: ['เงินเดือน','ยืม','อื่นๆ'],
-    expense: ['อาหาร','เดินทาง','ค่าเช่า','บันเทิง','ค่าน้ำไฟ','อินเทอร์เน็ต','ผ่อนมือถือ','ผ่อนสินเชื่อ','คืน','อื่นๆ']
-  };
+  // FIX: ใช้ DEFAULT_DATA แทน hardcode ซ้ำ
   if(!cats.length){ el.innerHTML='<div class="empty">— ยังไม่มีหมวดหมู่ —</div>'; return; }
-  el.innerHTML = cats.map(c=>`<div class="cat-item"><span>${c}${DEFAULT_CATS[catTab].includes(c)?'<span class="ci-default">default</span>':''}</span><button class="btn-cat-del" onclick="deleteCategory('${catTab}','${c}')">✕</button></div>`).join('');
+  el.innerHTML = cats.map(c=>`
+    <div class="cat-item">
+      <span>${escapeHtml(c)}${DEFAULT_DATA.categories[catTab].includes(c)?'<span class="ci-default">default</span>':''}</span>
+      <button class="btn-cat-del" onclick="deleteCategory('${catTab}','${escapeHtml(c)}')">✕</button>
+    </div>`).join('');
 }
 
 // ── 13. BUDGET & UPCOMING MANAGEMENT ──
@@ -566,12 +627,7 @@ function addBudget() {
     if (!confirm(`หมวด "${category}" ในเดือนนี้มีงบอยู่แล้ว (${exists.amount} ฿) ต้องการอัปเดตหรือไม่?`)) return;
     exists.amount = amount;
   } else {
-    window.budgets.push({
-      id: Date.now(),
-      category,
-      month,
-      amount
-    });
+    window.budgets.push({ id: Date.now(), category, month, amount });
   }
   saveLocalStorage();
   document.getElementById('budgetAmountInput').value = '';
@@ -586,21 +642,13 @@ function deleteBudget(id) {
   showToast('ลบงบประมาณแล้ว');
 }
 
-// เพิ่มรายการคาดการณ์ล่วงหน้า
 function addUpcomingFromBudget() {
   const month = document.getElementById('budgetMonthSelect').value;
   const name = document.getElementById('upcomingName').value.trim();
   const amount = parseFloat(document.getElementById('upcomingAmount').value);
   const category = document.getElementById('upcomingCategorySelect').value;
-
   if (!month || !name || isNaN(amount) || amount <= 0) return showToast('กรอกข้อมูลให้ครบถ้วน');
-  window.upcoming.push({
-    id: Date.now(),
-    month,
-    name,
-    amount,
-    category: category || 'อื่นๆ'
-  });
+  window.upcoming.push({ id: Date.now(), month, name, amount, category: category || 'อื่นๆ' });
   saveLocalStorage();
   document.getElementById('upcomingName').value = '';
   document.getElementById('upcomingAmount').value = '';
@@ -619,31 +667,26 @@ function renderBudgetPage() {
   const monthSelect = document.getElementById('budgetMonthSelect');
   if (!monthSelect) return;
 
-  // เตรียมเดือน
   const months = [...new Set(window.items.map(i => i.date.slice(0,7)))].sort().reverse();
   const thisMonth = new Date().toISOString().slice(0,7);
   if (!months.includes(thisMonth)) months.unshift(thisMonth);
   monthSelect.innerHTML = months.map(m => {
     const [y,mo] = m.split('-');
-    return `<option value="${m}" ${m === thisMonth ? 'selected' : ''}>${new Date(y,mo-1).toLocaleDateString('th-TH',{month:'long',year:'numeric'})}</option>`;
+    return `<option value="${m}" ${m === thisMonth ? 'selected' : ''}>${new Date(y,mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`;
   }).join('');
   const selectedMonth = monthSelect.value;
 
-  // เติมหมวดรายจ่ายสำหรับงบประมาณ
   const catSelect = document.getElementById('budgetCategorySelect');
   catSelect.innerHTML = '<option value="">-- เลือกหมวดรายจ่าย --</option>' +
-    (window.categories.expense || []).map(c => `<option value="${c}">${c}</option>`).join('');
+    (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
 
-  // เติมหมวดสำหรับ upcoming
   const upcomingCatSel = document.getElementById('upcomingCategorySelect');
   if (upcomingCatSel) {
     upcomingCatSel.innerHTML = '<option value="">-- หมวดหมู่ --</option>' +
-      (window.categories.expense || []).map(c => `<option value="${c}">${c}</option>`).join('');
+      (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
 
-  // ดึงงบเดือนนี้
   const budgets = window.budgets.filter(b => b.month === selectedMonth);
-  // ดึงรายจ่ายจริง
   const expenses = window.items.filter(i => i.type === 'expense' && i.date.startsWith(selectedMonth));
   const expenseByCat = {};
   expenses.forEach(i => {
@@ -672,11 +715,10 @@ function renderBudgetPage() {
       const over = remaining < 0;
       const statusColor = over ? 'var(--red)' : 'var(--green)';
       const statusText = over ? 'เกินงบ' : 'เหลือ';
-      
       return `
         <div class="item expense" style="flex-direction:column;align-items:stretch;border-left-color:${over?'var(--red)':'var(--green)'}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
-            <span class="name">${b.category}</span>
+            <span class="name">${escapeHtml(b.category)}</span>
             <button class="btn-del" onclick="deleteBudget(${b.id})" style="font-size:0.8rem">✕</button>
           </div>
           <div class="bar-row" style="margin-bottom:0.2rem">
@@ -686,12 +728,10 @@ function renderBudgetPage() {
           <div class="bar-track" style="height:8px">
             <div class="bar-fill expense" style="width:${pct}%;background:${over?'linear-gradient(90deg, #ff4f64, #ff8fa0)':'linear-gradient(90deg, #39d98a, #8ff0c0)'}"></div>
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('');
   }
 
-  // ── ส่วน Upcoming ──
   const upcomingForMonth = window.upcoming.filter(u => u.month === selectedMonth);
   const upcomingListDiv = document.getElementById('upcomingBudgetList');
   if (upcomingListDiv) {
@@ -702,14 +742,13 @@ function renderBudgetPage() {
         <div class="item expense">
           <div class="item-left" style="flex:1">
             <div class="name">${escapeHtml(u.name)}</div>
-            <div class="meta">${u.month} · ${u.category || 'อื่นๆ'}</div>
+            <div class="meta">${escapeHtml(u.month)} · ${escapeHtml(u.category || 'อื่นๆ')}</div>
           </div>
           <div class="item-right">
             <div class="amount">-${u.amount.toLocaleString()}</div>
             <button class="btn-del" onclick="deleteUpcoming(${u.id})">✕</button>
           </div>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
   }
 }
@@ -742,7 +781,7 @@ function renderSummary(){
   drawDonut(monthItems, chartDonutType);
 
   const topExp = [...monthItems.filter(i=>i.type==='expense')].sort((a,b)=>b.amount-a.amount).slice(0,5);
-  document.getElementById('topExpense').innerHTML = topExp.length ? topExp.map(i=>`<div class="top-item"><div>${escapeHtml(i.name)} <span style="font-size:0.62rem;color:var(--muted)">${i.category||''}</span></div><div class="ti-amount">-${i.amount.toLocaleString()}</div></div>`).join('') : '<div class="empty">— ไม่มีรายจ่าย —</div>';
+  document.getElementById('topExpense').innerHTML = topExp.length ? topExp.map(i=>`<div class="top-item"><div>${escapeHtml(i.name)} <span style="font-size:0.62rem;color:var(--muted)">${escapeHtml(i.category||'')}</span></div><div class="ti-amount">-${i.amount.toLocaleString()}</div></div>`).join('') : '<div class="empty">— ไม่มีรายจ่าย —</div>';
 }
 
 function renderBar(elId, monthItems, type){
@@ -753,7 +792,7 @@ function renderBar(elId, monthItems, type){
   const total = sorted.reduce((s,c)=>s+c[1],0);
   const el = document.getElementById(elId);
   if(!sorted.length){ el.innerHTML='<div class="empty">— ไม่มีข้อมูล —</div>'; return; }
-  el.innerHTML = sorted.map(([cat,amt])=>`<div class="bar-row"><div class="bar-label">${cat}</div><div class="bar-track"><div class="bar-fill ${type}" style="width:${total?(amt/total*100).toFixed(1):0}%"></div></div><div class="bar-val">${amt.toLocaleString()}</div></div>`).join('');
+  el.innerHTML = sorted.map(([cat,amt])=>`<div class="bar-row"><div class="bar-label">${escapeHtml(cat)}</div><div class="bar-track"><div class="bar-fill ${type}" style="width:${total?(amt/total*100).toFixed(1):0}%"></div></div><div class="bar-val">${amt.toLocaleString()}</div></div>`).join('');
 }
 
 function initMonthSelect(){
@@ -762,7 +801,7 @@ function initMonthSelect(){
   const thisMonth = today.slice(0,7);
   if(!months.includes(thisMonth)) months.unshift(thisMonth);
   const sel = document.getElementById('sumMonthSelect');
-  sel.innerHTML = months.map(m=>{ const [y,mo]=m.split('-'); return `<option value="${m}">${new Date(y,mo-1).toLocaleDateString('th-TH',{month:'long',year:'numeric'})}</option>`; }).join('');
+  sel.innerHTML = months.map(m=>{ const [y,mo]=m.split('-'); return `<option value="${m}">${new Date(y,mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`; }).join('');
   if(months.length) sel.value = thisMonth;
 }
 
@@ -806,16 +845,13 @@ function drawBar(monthItems, type){
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.parentElement.clientWidth - 32;
   const H = 200;
-  
   if (W <= 0) return;
-
   canvas.width = W * dpr;
   canvas.height = H * dpr;
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
-
   if (!data.length) {
     ctx.fillStyle = '#4a5568';
     ctx.font = '13px monospace';
@@ -823,27 +859,22 @@ function drawBar(monthItems, type){
     ctx.fillText('— ไม่มีข้อมูล —', W / 2, H / 2);
     return;
   }
-
   const maxVal = Math.max(...data.map(d => d[1]));
   const padL = 70, padR = 10, padT = 10, padB = 30;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
   const barH = Math.min(28, (chartH / data.length) - 6);
   const gap = (chartH - barH * data.length) / (data.length + 1);
-
   data.forEach(([cat, amt], i) => {
     const y = padT + gap + i * (barH + gap);
     const barW = (amt / maxVal) * chartW;
     const color = colors[i % colors.length];
-    
     ctx.shadowColor = color;
     ctx.shadowBlur = 6;
     ctx.fillStyle = color;
-    
     ctx.beginPath();
     ctx.roundRect ? ctx.roundRect(padL, y, barW, barH, 3) : ctx.rect(padL, y, barW, barH);
     ctx.fill();
-    
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#cdd4e0';
     ctx.font = `11px 'Sarabun', sans-serif`;
@@ -851,7 +882,6 @@ function drawBar(monthItems, type){
     ctx.textBaseline = 'middle';
     const label = cat.length > 7 ? cat.slice(0, 7) + '…' : cat;
     ctx.fillText(label, padL - 4, y + barH / 2);
-    
     ctx.fillStyle = color;
     ctx.font = `10px monospace`;
     ctx.textAlign = 'left';
@@ -867,16 +897,13 @@ function drawDonut(monthItems, type){
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.parentElement.clientWidth - 32;
   const H = 200;
-  
   if (W <= 0) return;
-
   canvas.width = W * dpr;
   canvas.height = H * dpr;
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
-  
   const legend = document.getElementById('donutLegend');
   if (!data.length) {
     ctx.fillStyle = '#4a5568';
@@ -886,13 +913,11 @@ function drawDonut(monthItems, type){
     legend.innerHTML = '';
     return;
   }
-
   const total = data.reduce((s, d) => s + d[1], 0);
   const cx = W / 2, cy = H / 2;
   const radius = Math.min(cx, cy) - 16;
   const inner = radius * 0.55;
   let startAngle = -Math.PI / 2;
-
   data.forEach(([cat, amt], i) => {
     const slice = (amt / total) * 2 * Math.PI;
     const color = colors[i % colors.length];
@@ -913,7 +938,6 @@ function drawDonut(monthItems, type){
     ctx.fill();
     startAngle += slice;
   });
-
   ctx.beginPath();
   ctx.arc(cx, cy, inner, 0, 2 * Math.PI);
   ctx.fillStyle = '#0f1320';
@@ -926,10 +950,9 @@ function drawDonut(monthItems, type){
   ctx.fillStyle = '#4a5568';
   ctx.font = `10px monospace`;
   ctx.fillText('บาท', cx, cy + 9);
-  
   legend.innerHTML = data.map(([cat, amt], i) => {
     const pct = ((amt / total) * 100).toFixed(1);
-    return `<div class="legend-item"><div class="legend-dot" style="background:${colors[i % colors.length]}"></div><span>${cat} <span style="color:var(--muted)">${pct}%</span></span></div>`;
+    return `<div class="legend-item"><div class="legend-dot" style="background:${colors[i % colors.length]}"></div><span>${escapeHtml(cat)} <span style="color:var(--muted)">${pct}%</span></span></div>`;
   }).join('');
 }
 
@@ -939,7 +962,6 @@ function showPage(id, el) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
-  
   if(id==='page-summary') { initMonthSelect(); renderSummary(); }
   if(id==='page-category') renderCatList();
   if(id==='page-loan') renderLoan();
@@ -951,21 +973,19 @@ function showPage(id, el) {
 // ── 17. INITIALIZE APP ──
 function initApp() {
   loadLocalStorage();
-  
+  displayCurrentDate();
   updateCategoryDropdown('income', 'categorySelect');
   updateCategoryDropdown('income', 'editCategory');
   updateWalletDropdowns();
   renderWalletFilterBar();
   renderList();
-  
   document.getElementById('modalBg').addEventListener('click', e => {
     if (e.target === document.getElementById('modalBg')) closeModal();
   });
   document.getElementById('instPayModalBg').addEventListener('click', e => {
     if (e.target === document.getElementById('instPayModalBg')) closeInstPayModal();
   });
-  
-  console.log('🚀 แอป Budget//Ctrl พร้อมใช้งาน (งบประมาณล่วงหน้า, หมายเหตุ, ฯลฯ)');
+  console.log('🚀 Budget//Ctrl พร้อมใช้งาน');
 }
 
 initApp();
