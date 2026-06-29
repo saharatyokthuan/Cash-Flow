@@ -58,7 +58,7 @@ body::before {
   margin-bottom: 0.65rem;
 }
 .app-header h1 span.header-date {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 0.65rem;
   color: var(--gold-glow);
   margin-left: 0.6rem;
