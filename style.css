@@ -158,6 +158,19 @@ body::before {
   gap: 0.5rem;
   margin-bottom: 2rem;
 }
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+
+  position: sticky;
+  top: 100px;
+  z-index: 10;
+  background: var(--bg);
+  padding: 0.5rem 0 0.8rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
 .s-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -294,7 +307,23 @@ body::before {
   border-color: var(--gold-dim);
   color: var(--gold);
 }
-
+.wallet-bar {
+  display: flex; gap: 0.4rem; margin-bottom: 0.9rem;
+  overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none;
+}
+.wallet-bar::-webkit-scrollbar { display: none; }
+.wallet-chip {
+  flex-shrink: 0; padding: 0.3rem 0.75rem; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--muted); font-size: 0.7rem; font-family: var(--sans);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.wallet-chip.active { border-color: var(--gold); background: rgba(200,168,75,0.12); color: var(--gold); }
+.wallet-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
 .search-wrap {
   margin-bottom: 0.7rem;
 }
@@ -309,12 +338,38 @@ body::before {
   font-family: var(--sans);
   outline: none;
 }
-.search-wrap input:focus {
-  border-color: var(--gold-dim);
+.search-wrap { margin-bottom: 0.7rem; }
+.search-wrap input {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: var(--sans);
+  outline: none;
 }
+.search-wrap input:focus { border-color: var(--gold-dim); }
 
-
-
+.filter { display: flex; gap: 0.4rem; margin-bottom: 0.9rem; flex-wrap: wrap; }
+.filter-btn, .loan-tab, .inst-tab, .cat-tab {
+  padding: 0.28rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+.filter-btn.active, .loan-tab.active, .inst-tab.active, .cat-tab.active {
+  background: rgba(200,168,75,0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
 
 .list-header {
   font-family: var(--sans);
@@ -326,6 +381,7 @@ body::before {
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.4rem;
 }
+
 
 .item {
   background: var(--panel);
