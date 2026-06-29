@@ -8,7 +8,11 @@ window.installments = [];
 window.categories = {};
 window.budgets = [];
 window.upcoming = [];
+window.walletFilter = 'all';
+window.walletFilterSearch = 'all'; // แยก filter สำหรับหน้า search
 window.editTargetId = null;
+let filter = 'all';
+let filterSearch = 'all'; // แยก filter สำหรับหน้า search
 
 // ── 3. DEFAULT DATA ──
 const DEFAULT_DATA = {
@@ -105,7 +109,7 @@ function getWalletBalance(walletId) {
   return init + inc - exp;
 }
 
-// ── 7. CONFIRM MODAL (ใหม่) ──
+// ── 7. CONFIRM MODAL ──
 let confirmResolver = null;
 
 function showConfirmModal(message, isDanger = true) {
@@ -144,6 +148,33 @@ function updateWalletDropdowns() {
   if (tTo && wallets.length > 1) tTo.value = wallets[1]?.id || wallets[0]?.id || '';
 }
 
+function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'walletFilter') {
+  const bar = document.getElementById(targetId);
+  if (!bar) return;
+  const wallets = window.wallets || [];
+  const currentFilter = window[filterVar] || 'all';
+  const allActive = currentFilter === 'all';
+  let html = `<button class="wallet-chip ${allActive ? 'active' : ''}" onclick="setWalletFilter('all','${targetId}','${filterVar}',this)">ทั้งหมด</button>`;
+  wallets.forEach(w => {
+    const active = currentFilter === w.id;
+    html += `<button class="wallet-chip ${active ? 'active' : ''}" onclick="setWalletFilter(${w.id},'${targetId}','${filterVar}',this)">${escapeHtml(w.name)}</button>`;
+  });
+  bar.innerHTML = html;
+}
+
+function setWalletFilter(id, targetId, filterVar, el) {
+  window[filterVar] = (id === 'all') ? 'all' : parseInt(id);
+  const bar = document.getElementById(targetId);
+  if (bar) {
+    bar.querySelectorAll('.wallet-chip').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+  if (targetId === 'walletFilterBar') {
+    renderList();
+  } else if (targetId === 'walletFilterBarSearch') {
+    renderSearchList();
+  }
+}
 
 // ── 9. NOTE TOGGLE ──
 function toggleNoteInput() {
@@ -187,28 +218,42 @@ function addItem() {
   updateSummary();
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteItem(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
     window.items = window.items.filter(i => i.id !== id);
     saveLocalStorage();
     renderList();
+    renderSearchList();
     updateSummary();
     showToast('ลบแล้ว');
   }
 }
 
-// ✅ ใช้ Confirm Modal
 async function clearAll() {
   if (window.items.length && await showConfirmModal('ล้างข้อมูลทั้งหมด?')) {
     window.items = [];
     saveLocalStorage();
     renderList();
+    renderSearchList();
     updateSummary();
     showToast('ล้างข้อมูลแล้ว');
   }
 }
 
+function setFilter(val, el) {
+  const isSearchPage = document.getElementById('page-search')?.classList.contains('active');
+  if (isSearchPage) {
+    filterSearch = val;
+    document.querySelectorAll('#page-search .filter-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderSearchList();
+  } else {
+    filter = val;
+    document.querySelectorAll('#page-home .filter-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderList();
+  }
+}
 
 function openEdit(id) {
   const item = window.items.find(i => i.id === id);
@@ -251,25 +296,108 @@ function saveEdit() {
   saveLocalStorage();
   closeModal();
   renderList();
+  renderSearchList();
   updateSummary();
   showToast('บันทึกแล้ว');
 }
 
 function downloadCSV() {
   if (!window.items.length) return showToast('ไม่มีข้อมูล');
-  let csv = 'วันที่,รายการ,หมายเหตุ,หมวดหมู่,ประเภท,จำนวน\n';
-  window.items.forEach(i => {
-    csv += `${i.date},"${i.name}","${i.note || ''}","${i.category || ''}",${i.type === 'income' ? 'รายรับ' : 'รายจ่าย'},${i.amount}\n`;
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  const header = 'วันที่,รายการ,จำนวนเงิน,หมวดหมู่,ประเภท,หมายเหตุ';
+  const rows = window.items.map(i => {
+    const date = formatDate(i.date);
+    const name = `"${i.name.replace(/"/g, '""')}"`;
+    const amount = i.amount;
+    const category = `"${(i.category || '').replace(/"/g, '""')}"`;
+    const type = i.type === 'income' ? 'รายรับ' : 'รายจ่าย';
+    const note = `"${(i.note || '').replace(/"/g, '""')}"`;
+    return `${date},${name},${amount},${category},${type},${note}`;
   });
+
+  const csv = '\uFEFF' + header + '\n' + rows.join('\n');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv' }));
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   a.download = `budget_${today}.csv`;
   a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('📥 ดาวน์โหลด CSV สำเร็จ');
+}
+// ✅ renderList สำหรับหน้า HOME (ไม่มีการค้นหา)
+function renderList() {
+  const items = window.items || [];
+  let filtered = items.filter(i => {
+    const matchFilter = filter === 'all' || i.type === filter;
+    const matchWallet = window.walletFilter === 'all' || i.walletId === window.walletFilter;
+    return matchFilter && matchWallet;
+  });
+
+  const c = document.getElementById('list');
+  if (!c) return;
+  if (!filtered.length) { c.innerHTML = '<div class="empty">— ไม่พบรายการ —</div>'; return; }
+  const wallets = window.wallets || [];
+
+  c.innerHTML = [...filtered].reverse().map(i => `
+    <div class="item ${i.type}">
+      <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
+        <div class="name">${escapeHtml(i.name)}${i.note ? `<span class="note-chip">${escapeHtml(i.note)}</span>` : ''}</div>
+        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
+      </div>
+      <div class="item-right">
+        <div class="amount">${i.type === 'income' ? '+' : '-'}${i.amount.toLocaleString()}</div>
+        <button class="btn-del" onclick="deleteItem(${i.id})">✕</button>
+      </div>
+    </div>`).join('');
 }
 
-function renderList() {
-  // list ย้ายไปหน้า SEARCH แล้ว — ฟังก์ชันนี้คงไว้เพื่อไม่ให้ error
-  // การแสดงรายการทำผ่าน searchItems() ที่หน้า SEARCH แทน
+// ✅ renderSearchList สำหรับหน้า SEARCH (มีการค้นหา)
+function renderSearchList() {
+  const search = document.getElementById('searchInputPage')?.value.toLowerCase().trim() || '';
+  const items = window.items || [];
+  let filtered = items.filter(i => {
+    const matchSearch = !search || i.name.toLowerCase().includes(search) || (i.note || '').toLowerCase().includes(search) || (i.category || '').toLowerCase().includes(search);
+    const matchFilter = filterSearch === 'all' || i.type === filterSearch;
+    const matchWallet = window.walletFilterSearch === 'all' || i.walletId === window.walletFilterSearch;
+    return matchSearch && matchFilter && matchWallet;
+  });
+
+  const container = document.getElementById('searchList');
+  const header = document.getElementById('searchListHeader');
+  if (!container) return;
+
+  if (!search) {
+    if (header) header.innerText = 'ผลลัพธ์ (พิมพ์คำค้นเพื่อเริ่ม)';
+    container.innerHTML = '<div class="empty">— พิมพ์คำค้นด้านบน —</div>';
+    return;
+  }
+
+  if (header) header.innerText = `ผลลัพธ์ (${filtered.length} รายการ)`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">— ไม่พบรายการ —</div>';
+    return;
+  }
+
+  const wallets = window.wallets || [];
+  container.innerHTML = [...filtered].reverse().map(i => `
+    <div class="item ${i.type}">
+      <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
+        <div class="name">${escapeHtml(i.name)}${i.note ? `<span class="note-chip">${escapeHtml(i.note)}</span>` : ''}</div>
+        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
+      </div>
+      <div class="item-right">
+        <div class="amount">${i.type === 'income' ? '+' : '-'}${i.amount.toLocaleString()}</div>
+        <button class="btn-del" onclick="deleteItem(${i.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function updateSummary() {
@@ -282,6 +410,8 @@ function updateSummary() {
   if (incEl) incEl.innerText = inc.toLocaleString();
   if (expEl) expEl.innerText = exp.toLocaleString();
   if (balEl) balEl.innerText = (inc - exp).toLocaleString();
+  const header = document.getElementById('listHeader');
+  if (header) header.innerText = `รายการทั้งหมด (${items.length})`;
 }
 
 // ── 11. WALLET MANAGEMENT ──
@@ -297,6 +427,8 @@ function addWallet() {
   document.getElementById('walletInitInput').value = '0';
   renderWalletPage();
   updateWalletDropdowns();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('เพิ่มบัญชีแล้ว');
 }
 
@@ -310,7 +442,6 @@ function displayCurrentDate() {
   if (el) el.textContent = ` [${formattedDate}]`;
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteWallet(id) {
   if (window.wallets.length <= 1) return showToast('ต้องมีบัญชีอย่างน้อย 1 บัญชี');
   
@@ -326,6 +457,10 @@ async function deleteWallet(id) {
   saveLocalStorage();
   renderWalletPage();
   updateWalletDropdowns();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
+  renderList();
+  renderSearchList();
   showToast('ลบบัญชีแล้ว');
 }
 
@@ -348,6 +483,7 @@ function doTransfer() {
   document.getElementById('transferNote').value = '';
   renderWalletPage();
   renderList();
+  renderSearchList();
   updateSummary();
   showToast(`โอน ${amount.toLocaleString()} ฿ สำเร็จ`);
 }
@@ -379,7 +515,7 @@ function renderWalletPage() {
   updateWalletDropdowns();
 }
 
-// ── 12. LOAN TRACKER ──
+// ── 12. LOAN TRACKER ── (ไม่มีการเปลี่ยนแปลง)
 let loanDisplayMode = 'person';
 
 function setLoanTab(mode, el) { loanDisplayMode = mode; document.querySelectorAll('.loan-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderLoan(); }
@@ -437,7 +573,7 @@ function renderLoan() {
   }
 }
 
-// ── 13. INSTALLMENT ──
+// ── 13. INSTALLMENT ── (ไม่มีการเปลี่ยนแปลง)
 let instTab = 'phone';
 
 function setInstTab(type, el) { instTab = type; document.querySelectorAll('.inst-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderInstallment(); }
@@ -461,7 +597,6 @@ function addInstallment() {
   showToast('เพิ่มรายการแล้ว');
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteInstallment(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการผ่อนนี้?')) {
     window.installments = window.installments.filter(i => i.id !== id);
@@ -519,6 +654,7 @@ function saveInstPay() {
   closeInstPayModal();
   renderInstallment();
   renderList();
+  renderSearchList();
   updateSummary();
   showToast(`บันทึกจ่าย ${qty} งวดแล้ว`);
 }
@@ -557,7 +693,7 @@ function renderInstallment() {
   }).join('');
 }
 
-// ── 14. CATEGORIES ──
+// ── 14. CATEGORIES ── (ไม่มีการเปลี่ยนแปลง)
 let catTab = 'income';
 
 function setCatTab(type, el) { catTab = type; document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderCatList(); }
@@ -573,7 +709,6 @@ function addCategory() {
   updateCategoryDropdown(document.getElementById('typeSelect').value, 'categorySelect');
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteCategory(type, name) {
   if (DEFAULT_DATA.categories[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
   if (!await showConfirmModal(`คุณแน่ใจว่าต้องการลบหมวด "${name}"?`)) return;
@@ -607,7 +742,6 @@ function renderCatList() {
 }
 
 // ── 15. BUDGET & UPCOMING ──
-// ✅ ใช้ Confirm Modal สำหรับการอัปเดต
 async function addBudget() {
   const month = document.getElementById('budgetMonthSelect').value;
   if (!month) return showToast('เลือกเดือนก่อน');
@@ -632,7 +766,6 @@ async function addBudget() {
   showToast('บันทึกงบประมาณแล้ว');
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteBudget(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบงบประมาณนี้?')) {
     window.budgets = window.budgets.filter(b => b.id !== id);
@@ -656,7 +789,6 @@ function addUpcomingFromBudget() {
   showToast('เพิ่มรายการคาดการณ์แล้ว');
 }
 
-// ✅ ใช้ Confirm Modal
 async function deleteUpcoming(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการคาดการณ์นี้?')) {
     window.upcoming = window.upcoming.filter(u => u.id !== id);
@@ -762,7 +894,7 @@ function renderBudgetPage() {
   }
 }
 
-// ── 16. DASHBOARD / SUMMARY ──
+// ── 16. DASHBOARD / SUMMARY ── (ไม่มีการเปลี่ยนแปลง)
 let chartBarType = 'expense';
 let chartDonutType = 'expense';
 
@@ -980,48 +1112,7 @@ function drawDonut(monthItems, type) {
   }
 }
 
-// ── 18. SEARCH PAGE ──
-function searchItems() {
-  const query = document.getElementById('searchInputPage')?.value.toLowerCase().trim() || '';
-  const items = window.items || [];
-  const filtered = items.filter(i => {
-    const matchName = i.name.toLowerCase().includes(query);
-    const matchNote = (i.note || '').toLowerCase().includes(query);
-    const matchCat = (i.category || '').toLowerCase().includes(query);
-    return matchName || matchNote || matchCat;
-  });
-
-  const container = document.getElementById('searchResults');
-  const header = document.getElementById('searchListHeader');
-  if (!container) return;
-
-  if (!query) {
-    if (header) header.innerText = 'ผลลัพธ์ (พิมพ์คำค้นเพื่อเริ่ม)';
-    container.innerHTML = '<div class="empty">— พิมพ์คำค้นด้านบน —</div>';
-    return;
-  }
-
-  if (header) header.innerText = `ผลลัพธ์ (${filtered.length} รายการ)`;
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty">— ไม่พบรายการ —</div>';
-    return;
-  }
-
-  const wallets = window.wallets || [];
-  container.innerHTML = [...filtered].reverse().map(i => `
-    <div class="item ${i.type}">
-      <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
-        <div class="name">${escapeHtml(i.name)}${i.note ? `<span class="note-chip">${escapeHtml(i.note)}</span>` : ''}</div>
-        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
-      </div>
-      <div class="item-right">
-        <div class="amount">${i.type === 'income' ? '+' : '-'}${i.amount.toLocaleString()}</div>
-        <button class="btn-del" onclick="deleteItem(${i.id})">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
+// ── 18. SEARCH PAGE ── (ลบฟังก์ชัน `searchItems` เดิม เพราะใช้ `renderSearchList` แทน)
 
 // ── 19. PAGE ROUTING ──
 function showPage(id, el) {
@@ -1042,8 +1133,13 @@ function showPage(id, el) {
     const inp = document.getElementById('searchInputPage');
     if (inp) {
       setTimeout(() => inp.focus(), 100);
-      if (inp.value.trim()) searchItems();
+      renderSearchList();
     }
+    // โหลด filter ให้ตรงกับหน้า search
+    renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
+  }
+  if (id === 'page-home') {
+    renderWalletFilterBar('walletFilterBar', 'walletFilter');
   }
 }
 
@@ -1057,7 +1153,10 @@ function initApp() {
   updateCategoryDropdown('income', 'editCategory');
 
   updateWalletDropdowns();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   renderList();
+  renderSearchList();
   updateSummary();
 
   ['dateInput', 'instDate', 'instPayDate'].forEach(id => {
@@ -1104,12 +1203,12 @@ function initApp() {
   document.getElementById('typeSelect')?.addEventListener('change', function() { updateCategoryDropdown(this.value, 'categorySelect'); });
   document.getElementById('editType')?.addEventListener('change', function() { updateCategoryDropdown(this.value, 'editCategory'); });
 
-  // Search input auto-search (debounce)
+  // Search input auto-search (debounce) สำหรับหน้า SEARCH
   const searchInput = document.getElementById('searchInputPage');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
       clearTimeout(window.searchDebouncePage);
-      window.searchDebouncePage = setTimeout(searchItems, 300);
+      window.searchDebouncePage = setTimeout(renderSearchList, 300);
     });
     searchInput.addEventListener('focus', function() { this.select(); });
   }
@@ -1125,7 +1224,7 @@ function initApp() {
     }, 200);
   });
 
-  console.log(' พร้อมใช้งาน (FULL FIXED + CUSTOM CONFIRM UI)');
+  console.log('🚀 Budget//Ctrl พร้อมใช้งาน (FULL FIXED + SEPARATE SEARCH PAGE)');
 }
 
 initApp();
