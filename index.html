@@ -3,41 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>BUDGET//CTRL</title>
+  <title>Manage-Cashflow</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app-header">
-  <h1>BUDGET<span>//</span>CTRL<span style="font-size:0.555rem;color:var(--gold);margin-left:0.5 rem;"> 🟢ONLINE</span></h1>
+<h1>Manage<span>//</span>Cash Flow<span id="currentDate"class="header-date"></span></h1>
   <nav class="nav-grid">
-    <button class="nav-btn active" onclick="showPage('page-home',this)">
-      <span class="nav-icon">📝</span>บันทึก
+    <button class="nav-btn active" onclick="showPage('page-home',this)">HOME 
     </button>
-    <button class="nav-btn" onclick="showPage('page-wallet',this)">
-      <span class="nav-icon">💲</span>บัญชี
+    <button class="nav-btn" onclick="showPage('page-wallet',this)">WALLET
     </button>
-    <button class="nav-btn" onclick="showPage('page-loan',this)">
-      <span class="nav-icon">🤝</span>ยืม-คืน
+    <button class="nav-btn" onclick="showPage('page-loan',this)">LOAN
     </button>
-    <button class="nav-btn" onclick="showPage('page-install',this)">
-      <span class="nav-icon">💳</span>สินเชื่อ
+    <button class="nav-btn" onclick="showPage('page-install',this)">INSTALL
     </button>
-    <button class="nav-btn" onclick="showPage('page-category',this)">
-      <span class="nav-icon">🏷️</span>หมวดหมู่
+    <button class="nav-btn" onclick="showPage('page-category',this)">CATEGORY
     </button>
-    <button class="nav-btn" onclick="showPage('page-summary',this)">
-      <span class="nav-icon">📊</span>Dashboard
+    <button class="nav-btn" onclick="showPage('page-summary',this)">DASHBOARD
     </button>
-    <button class="nav-btn" onclick="showPage('page-budget',this)">
-      <span class="nav-icon">🎯</span>ตั้งงบประมาณล่วงหน้า
+    <button class="nav-btn" onclick="showPage('page-budget',this)">BUDGET
     </button>
   </nav>
 </div>
 
-<!-- หน้า Home (บันทึกรายรับ-รายจ่าย) -->
+<!--Homepage (INCOME-EXPENSES) -->
 <div class="page active" id="page-home">
-  <div class="page-title">︎🌐หน้าหลัก</div>
+  <div class="page-title">︎homepage</div>
   <div class="page-sub" id="monthLabel"></div>
   <div class="summary-grid">
     <div class="s-card income">
@@ -256,12 +249,10 @@
   <div class="page-title">// BUDGET vs ACTUAL</div>
   <div class="page-sub">ตั้งงบประมาณล่วงหน้า เทียบกับจ่ายจริง</div>
 
-  <!-- เลือกเดือน -->
   <div class="month-sel-wrap">
     <select id="budgetMonthSelect" onchange="renderBudgetPage()"></select>
   </div>
 
-  <!-- ฟอร์มตั้งงบประมาณ -->
   <div class="cp-form">
     <select id="budgetCategorySelect">
       <option value="">-- เลือกหมวดรายจ่าย --</option>
@@ -270,7 +261,6 @@
     <button class="btn-neon" onclick="addBudget()">+ ตั้งงบประมาณ</button>
   </div>
 
-  <!-- สรุปภาพรวม -->
   <div class="section-title">ภาพรวมเดือนนี้</div>
   <div class="summary-grid" style="grid-template-columns:1fr 1fr;">
     <div class="s-card expense">
@@ -283,11 +273,9 @@
     </div>
   </div>
 
-  <!-- รายการงบแต่ละหมวด -->
   <div class="list-header" id="budgetListHeader">รายการงบประมาณ</div>
   <div id="budgetList"></div>
 
-  <!-- ส่วนรายการคาดการณ์ล่วงหน้า -->
   <div class="section-title">📅 รายการที่คาดว่าจะจ่ายในเดือนนี้</div>
   <div class="cp-form">
     <input type="text" id="upcomingName" placeholder="รายการ">
@@ -300,7 +288,7 @@
   <div id="upcomingBudgetList"></div>
 </div>
 
-<!-- Modal สำหรับแก้ไขรายการ -->
+<!-- Modal แก้ไขรายการ -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>✏ EDIT_ITEM</h2>
@@ -310,6 +298,7 @@
     <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="editNote"></div>
     <div class="modal-row"><label>จำนวนเงิน</label><input type="number" id="editAmount" min="0"></div>
     <div class="modal-row"><label>ประเภท</label><select id="editType"><option value="income">▲ รายรับ</option><option value="expense">▼ รายจ่าย</option></select></div>
+    <div class="modal-row"><label>บัญชี</label><select id="editWallet"></select></div>
     <div class="modal-row"><label>หมวดหมู่</label><select id="editCategory"></select></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
@@ -318,13 +307,14 @@
   </div>
 </div>
 
-<!-- Modal สำหรับจ่ายค่างวด -->
+<!-- Modal จ่ายค่างวด -->
 <div class="modal-bg" id="instPayModalBg">
   <div class="modal">
     <h2 id="instPayTitle">💳 PAY_INSTALLMENT</h2>
     <input type="hidden" id="instPayId">
     <div class="modal-row"><label>จำนวนงวดที่จ่าย</label><input type="number" id="instPayQty" min="1" value="1"></div>
     <div class="modal-row"><label>วันที่จ่าย</label><input type="date" id="instPayDate"></div>
+    <div class="modal-row"><label>บัญชี</label><select id="instPayWallet"></select></div>
     <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="instPayNote"></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeInstPayModal()">ยกเลิก</button>
