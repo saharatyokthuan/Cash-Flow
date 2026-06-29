@@ -9,22 +9,16 @@
 <body>
 
 <div class="app-header">
-<h1>Manage<span>//</span>Cash Flow<span id="currentDate"class="header-date"></span></h1>
+  <h1>Manage<span>//</span>Cash Flow <span id="currentDate" class="header-date"></span></h1>
   <nav class="nav-grid">
-    <button class="nav-btn active" onclick="showPage('page-home',this)">HOME 
-    </button>
-    <button class="nav-btn" onclick="showPage('page-wallet',this)">WALLET
-    </button>
-    <button class="nav-btn" onclick="showPage('page-loan',this)">LOAN
-    </button>
-    <button class="nav-btn" onclick="showPage('page-install',this)">INSTALL
-    </button>
-    <button class="nav-btn" onclick="showPage('page-category',this)">CATEGORY
-    </button>
-    <button class="nav-btn" onclick="showPage('page-summary',this)">DASHBOARD
-    </button>
-    <button class="nav-btn" onclick="showPage('page-budget',this)">BUDGET
-    </button>
+    <button class="nav-btn active" onclick="showPage('page-home',this)"><span class="nav-icon">📝</span>HOME</button>
+    <button class="nav-btn" onclick="showPage('page-wallet',this)"><span class="nav-icon">💲</span>WALLET</button>
+    <button class="nav-btn" onclick="showPage('page-loan',this)"><span class="nav-icon">♻️</span>LOAN</button>
+    <button class="nav-btn" onclick="showPage('page-install',this)"><span class="nav-icon">💳</span>INSTALL</button>
+    <button class="nav-btn" onclick="showPage('page-category',this)"><span class="nav-icon">💾</span>CATEGORY</button>
+    <button class="nav-btn" onclick="showPage('page-summary',this)"><span class="nav-icon">📊</span>DASHBOARD</button>
+    <button class="nav-btn" onclick="showPage('page-budget',this)"><span class="nav-icon">⚠️</span>BUDGET</button>
+    <button class="nav-btn" onclick="showPage('page-search',this)"><span class="nav-icon">🔍</span>SEARCH</button>
   </nav>
 </div>
 
@@ -67,21 +61,9 @@
   <div class="toolbar">
     <button class="btn-tool" onclick="downloadCSV()">📥EXPORT CSV</button>
     <button class="btn-tool" onclick="clearAll()">🗑 ล้างข้อมูล</button>
+    <button class="btn-tool" onclick="showPage('page-search',this)">🔍 ค้นหารายการ</button>
   </div>
 
-  <div class="search-wrap">
-    <input type="text" id="searchInput" placeholder="🔍 ค้นหารายการ...">
-  </div>
-
-  <div class="filter">
-    <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
-    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
-    <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
-  </div>
-
-  <div class="wallet-bar" id="walletFilterBar"></div>
-  <div class="list-header" id="listHeader">รายการ</div>
-  <div id="list"></div>
 </div>
 
 <!-- หน้ากระเป๋าเงิน -->
@@ -89,14 +71,13 @@
   <div class="page-title">// WALLETS</div>
   <div class="page-sub">จัดการกระเป๋าเงินและโอนระหว่างบัญชี</div>
 
+  <div class="section-title">สรุปยอดทุกบัญชี</div>
+  <div class="wsc-grid" id="walletSummary"></div>
   <div class="cp-form">
     <input type="text" id="walletNameInput" placeholder="บัญชี">
     <input type="number" id="walletInitInput" placeholder="ยอดเริ่มต้น" min="0" value="0">
-    <button class="btn-neon" onclick="addWallet()">✔️เพิ่มบัญชี</button>
+    <button class="btn-neon" onclick="addWallet()">เพิ่มบัญชี</button>
   </div>
-
-  <div class="section-title">สรุปยอดทุกบัญชี</div>
-  <div class="wsc-grid" id="walletSummary"></div>
 
   <div class="section-title">โอนเงินระหว่างบัญชี</div>
   <div class="transfer-form">
@@ -220,7 +201,7 @@
       <button class="chart-tab active" onclick="setChartTab('expense',this)">▼ รายจ่าย</button>
       <button class="chart-tab" onclick="setChartTab('income',this)">▲ รายรับ</button>
     </div>
-    <canvas id="barCanvas" height="200"></canvas>
+    <canvas id="barCanvas" height="100"></canvas>
   </div>
   <div class="chart-wrap">
     <div class="chart-title">// DONUT CHART — สัดส่วน</div>
@@ -288,6 +269,20 @@
   <div id="upcomingBudgetList"></div>
 </div>
 
+<!-- หน้า SEARCH -->
+<div class="page" id="page-search">
+  <div class="page-title">// SEARCH</div>
+  <div class="page-sub">ค้นหารายการจากชื่อ, หมายเหตุ, หรือหมวดหมู่</div>
+
+  <div class="search-wrap" style="margin-bottom:1rem;">
+    <input type="text" id="searchInputPage" placeholder="พิมพ์คำค้น...">
+    <button class="btn-neon" onclick="searchItems()" style="margin-top:0.5rem;">🔍 ค้นหา</button>
+  </div>
+
+  <div class="list-header" id="searchListHeader">ผลลัพธ์</div>
+  <div id="searchResults"></div>
+</div>
+
 <!-- Modal แก้ไขรายการ -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -319,6 +314,18 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeInstPayModal()">ยกเลิก</button>
       <button class="btn-save" onclick="saveInstPay()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL (ใหม่) ===== -->
+<div class="modal-bg" id="confirmModalBg">
+  <div class="modal" style="max-width:340px;">
+    <h2 id="confirmTitle" style="color:var(--red);">⚠️ ยืนยันการดำเนินการ</h2>
+    <p id="confirmMessage" style="margin:1rem 0;font-size:0.95rem;line-height:1.5;color:var(--text);word-break:break-word;"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="confirmNoBtn">ยกเลิก</button>
+      <button class="btn-save" id="confirmYesBtn" style="border-color:var(--red) !important;color:var(--red);">ยืนยัน</button>
     </div>
   </div>
 </div>
