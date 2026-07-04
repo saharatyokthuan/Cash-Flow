@@ -1,7 +1,5 @@
-// ── 1. LOCALSTORAGE KEY NAME ──
 const STORAGE_KEY = 'budgetCtrl_LocalData';
 
-// ── 2. GLOBAL VARIABLES ──
 window.items = [];
 window.wallets = [];
 window.installments = [];
@@ -13,28 +11,26 @@ window.walletFilterSearch = 'all';
 window.editTargetId = null;
 let filter = 'all';
 let filterSearch = 'all';
+let currentMode = 'income';
 
-// ── 3. DEFAULT DATA ──
 const DEFAULT_DATA = {
   items: [],
   wallets: [
     { id: 1, name: 'Cash', init: 0 },
-    { id: 2, name: 'K PLUS', init: 0 }
+    { id: 2, name: 'Bangkok Bank', init: 0 }
   ],
   installments: [],
   categories: {
-    income: ['เงินเดือน', 'ยืม', 'อื่นๆ'],
-    expense: ['อาหาร', 'เดินทาง', 'ค่าเช่า', 'บันเทิง', 'ค่าน้ำไฟ', 'อินเทอร์เน็ต', 'ผ่อนมือถือ', 'ผ่อนสินเชื่อ', 'คืน', 'อื่นๆ']
+    income: ['เงินเดือน', 'ยืม', 'โอน', 'อื่นๆ'],
+    expense: ['อาหาร', 'เดินทาง', 'ค่าเช่า', 'บันเทิง', 'ค่าน้ำไฟ', 'อินเทอร์เน็ต', 'ผ่อนมือถือ', 'ผ่อนสินเชื่อ', 'คืน', 'โอน', 'อื่นๆ']
   },
   budgets: [],
   upcoming: []
 };
 
-// ── 4. TIMEZONE & DATE SETUP (GMT+7) ──
 const tzoffset = (new Date()).getTimezoneOffset() * 60000;
 const today = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
 
-// ── 5. SAVE / LOAD ──
 function saveLocalStorage() {
   const data = {
     items: window.items || [],
@@ -58,6 +54,17 @@ function loadLocalStorage() {
       window.categories = data.categories || DEFAULT_DATA.categories;
       window.budgets = data.budgets || [];
       window.upcoming = data.upcoming || [];
+
+      let migrated = false;
+      if (window.categories.income && !window.categories.income.includes('โอน')) {
+        window.categories.income.push('โอน');
+        migrated = true;
+      }
+      if (window.categories.expense && !window.categories.expense.includes('โอน')) {
+        window.categories.expense.push('โอน');
+        migrated = true;
+      }
+      if (migrated) saveLocalStorage();
     } catch (e) {
       loadDefault();
     }
@@ -79,7 +86,59 @@ function loadDefault() {
   saveLocalStorage();
 }
 
-// ── 6. HELPERS ──
+function exportForChat() {
+  const payload = {
+    source: 'budgetCtrl',
+    exportedAt: new Date().toISOString(),
+    items: window.items || [],
+    wallets: window.wallets || [],
+    installments: window.installments || [],
+    categories: window.categories || {},
+    budgets: window.budgets || [],
+    upcoming: window.upcoming || []
+  };
+  const json = JSON.stringify(payload);
+
+  const doCopy = () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(json);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  };
+
+  doCopy().then(() => {
+    showToast('คัดลอกข้อมูลแล้ว ไปวางใน OPS//CHAT ได้เลย');
+  }).catch(() => {
+    showExportFallback(json);
+  });
+}
+
+function showExportFallback(json) {
+  let bg = document.getElementById('exportFallbackBg');
+  if (!bg) {
+    bg = document.createElement('div');
+    bg.id = 'exportFallbackBg';
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    bg.innerHTML = `
+      <div style="background:#0d1018;border:1px solid var(--gold-dim);border-radius:12px;padding:16px;max-width:360px;width:100%;">
+        <div style="color:var(--gold);font-size:13px;margin-bottom:8px;">คัดลอกข้อความนี้ไปวางใน OPS//CHAT</div>
+        <textarea id="exportFallbackText" readonly style="width:100%;height:120px;background:#000;color:#ccc;border:1px solid var(--gold-dim);border-radius:8px;padding:8px;font-size:10px;"></textarea>
+        <button onclick="document.getElementById('exportFallbackBg').remove()" style="margin-top:10px;width:100%;padding:8px;background:var(--gold-dim);color:#fff;border:none;border-radius:8px;">ปิด</button>
+      </div>`;
+    document.body.appendChild(bg);
+  }
+  document.getElementById('exportFallbackText').value = json;
+  document.getElementById('exportFallbackText').select();
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -109,7 +168,6 @@ function getWalletBalance(walletId) {
   return init + inc - exp;
 }
 
-// ── 7. CONFIRM MODAL ──
 let confirmResolver = null;
 
 function showConfirmModal(message, isDanger = true) {
@@ -118,7 +176,7 @@ function showConfirmModal(message, isDanger = true) {
     const title = document.getElementById('confirmTitle');
     const msg = document.getElementById('confirmMessage');
     const yesBtn = document.getElementById('confirmYesBtn');
-    
+
     msg.innerText = message;
     if (isDanger) {
       title.style.color = 'var(--red)';
@@ -136,7 +194,6 @@ function showConfirmModal(message, isDanger = true) {
   });
 }
 
-// ── 8. DROPDOWNS ──
 function updateWalletDropdowns() {
   const wallets = window.wallets || [];
   const opts = wallets.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
@@ -176,27 +233,41 @@ function setWalletFilter(id, targetId, filterVar, el) {
   }
 }
 
-// ── 9. NOTE TOGGLE ──
 function toggleNoteInput() {
   const input = document.getElementById('noteInput');
   const btn = document.getElementById('noteToggleBtn');
   if (!input || !btn) return;
   if (input.style.display === 'none' || !input.style.display) {
     input.style.display = 'block';
-    btn.textContent = '✖ ไม่ต้องใช้หมายเหตุ';
+    btn.textContent = '✖';
     input.focus();
   } else {
     input.style.display = 'none';
     input.value = '';
-    btn.textContent = 'หมายเหตุ';
+    btn.textContent = '📝 หมายเหตุ';
   }
 }
 
-// ── 10. ADD / DEL / EDIT TRANSACTION ──
+function setMode(mode, el) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    const isIncome = btn.dataset.mode === 'income';
+    const isActive = btn.classList.contains('active');
+    btn.textContent = isIncome
+      ? (isActive ? '● รายรับ' : '○ รายรับ')
+      : (isActive ? '● รายจ่าย' : '○ รายจ่าย');
+  });
+
+  updateCategoryDropdown(mode, 'categorySelect');
+}
+
 function addItem() {
   const name = document.getElementById('nameInput').value.trim();
   const amount = parseFloat(document.getElementById('amountInput').value);
-  const type = document.getElementById('typeSelect').value;
+  const type = currentMode;
   const date = document.getElementById('dateInput').value || today;
   const note = document.getElementById('noteInput').value.trim();
   const category = document.getElementById('categorySelect').value;
@@ -215,7 +286,7 @@ function addItem() {
   if (noteBtn) noteBtn.textContent = 'หมายเหตุ';
 
   renderList();
-  updateSummary();
+  update();
   renderWalletPage();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
@@ -228,7 +299,7 @@ async function deleteItem(id) {
     saveLocalStorage();
     renderList();
     renderSearchList();
-    updateSummary();
+    update();
     renderWalletPage();
     renderWalletFilterBar('walletFilterBar', 'walletFilter');
     renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
@@ -242,7 +313,7 @@ async function clearAll() {
     saveLocalStorage();
     renderList();
     renderSearchList();
-    updateSummary();
+    update();
     renderWalletPage();
     renderWalletFilterBar('walletFilterBar', 'walletFilter');
     renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
@@ -275,8 +346,10 @@ function openEdit(id) {
   document.getElementById('editNote').value = item.note || '';
   document.getElementById('editAmount').value = item.amount;
   document.getElementById('editType').value = item.type;
-  updateCategoryDropdown(item.type, 'editCategory', item.category);
+
   updateWalletDropdowns();
+  updateCategoryDropdown(item.type, 'editCategory', item.category);
+
   const editWalletSel = document.getElementById('editWallet');
   if (editWalletSel) editWalletSel.value = item.walletId;
   document.getElementById('modalBg').classList.add('open');
@@ -307,7 +380,7 @@ function saveEdit() {
   closeModal();
   renderList();
   renderSearchList();
-  updateSummary();
+  update();
   renderWalletPage();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
@@ -341,7 +414,7 @@ function downloadCSV() {
   a.download = `budget_${today}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('📥 ดาวน์โหลด CSV สำเร็จ');
+  showToast('ดาวน์โหลด CSV สำเร็จ');
 }
 
 function renderList() {
@@ -353,6 +426,9 @@ function renderList() {
   });
 
   filtered = [...filtered].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+  const header = document.getElementById('listHeader');
+  if (header) header.innerText = `รายการทั้งหมด (${filtered.length})`;
 
   const c = document.getElementById('list');
   if (!c) return;
@@ -411,7 +487,7 @@ function renderSearchList() {
   `).join('');
 }
 
-function updateSummary() {
+function update() {
   const items = window.items || [];
   let inc = 0, exp = 0;
   items.forEach(i => { if (i.type === 'income') inc += i.amount; else exp += i.amount; });
@@ -421,11 +497,8 @@ function updateSummary() {
   if (incEl) incEl.innerText = inc.toLocaleString();
   if (expEl) expEl.innerText = exp.toLocaleString();
   if (balEl) balEl.innerText = (inc - exp).toLocaleString();
-  const header = document.getElementById('listHeader');
-  if (header) header.innerText = `รายการทั้งหมด (${items.length})`;
 }
 
-// ── 11. WALLET MANAGEMENT ──
 function addWallet() {
   const name = document.getElementById('walletNameInput').value.trim();
   const init = parseFloat(document.getElementById('walletInitInput').value) || 0;
@@ -435,7 +508,7 @@ function addWallet() {
   window.wallets.push({ id, name, init });
   saveLocalStorage();
   document.getElementById('walletNameInput').value = '';
-  document.getElementById('walletInitInput').value = '0';
+  document.getElementById('walletInitInput').value = 0;
   renderWalletPage();
   updateWalletDropdowns();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
@@ -449,21 +522,21 @@ function displayCurrentDate() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = now.getFullYear();
   const formattedDate = `${day}/${month}/${year}`;
-  const el = document.getElementById('currentDate');
-  if (el) el.textContent = ` [${formattedDate}]`;
+  const el = document.getElementById('CurrentDate');
+  if (el) el.textContent = ` ${formattedDate}`;
 }
 
 async function deleteWallet(id) {
   if (window.wallets.length <= 1) return showToast('ต้องมีบัญชีอย่างน้อย 1 บัญชี');
-  
+
   const hasTransfer = window.items.some(i => i.transferId && (i.walletId === id));
   if (hasTransfer && !await showConfirmModal('บัญชีนี้มีรายการโอนเงินอยู่ ยืนยันลบ?')) return;
-  
+
   const used = window.items.some(i => i.walletId === id && !i.transferId);
   if (used && !await showConfirmModal('บัญชีนี้มีรายการอยู่ ยืนยันลบ?')) return;
-  
+
   if (!await showConfirmModal('คุณแน่ใจว่าต้องการลบบัญชีนี้?')) return;
-  
+
   window.wallets = window.wallets.filter(w => w.id !== id);
   saveLocalStorage();
   renderWalletPage();
@@ -485,17 +558,16 @@ function doTransfer() {
 
   const fromName = window.wallets.find(w => w.id === fromId)?.name || '';
   const toName = window.wallets.find(w => w.id === toId)?.name || '';
-  const ts = Date.now();
-  const transferId = ts + Math.random() * 1000;
-  window.items.push({ id: ts, name: `โอน → ${toName}`, amount, type: 'expense', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: fromId, transferId });
-  window.items.push({ id: ts + 1, name: `รับโอน ← ${fromName}`, amount, type: 'income', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: toId, transferId });
+  const transferId = `tr_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+  window.items.push({ id: Date.now(), name: `โอน → ${toName}`, amount, type: 'expense', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: fromId, transferId });
+  window.items.push({ id: Date.now() + Math.floor(Math.random() * 9000 + 1000), name: `รับโอน ← ${fromName}`, amount, type: 'income', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: toId, transferId });
   saveLocalStorage();
   document.getElementById('transferAmount').value = '';
   document.getElementById('transferNote').value = '';
   renderWalletPage();
   renderList();
   renderSearchList();
-  updateSummary();
+  update();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast(`โอน ${amount.toLocaleString()} ฿ สำเร็จ`);
@@ -517,7 +589,7 @@ function renderWalletPage() {
       const bal = getWalletBalance(w.id);
       const txCount = window.items.filter(i => i.walletId === w.id).length;
       return `<div class="wallet-card">
-        <div><div class="wc-name">👛 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init || 0).toLocaleString()} ฿</div></div>
+        <div><div class="wc-name">💲 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init || 0).toLocaleString()} ฿</div></div>
         <div style="display:flex;align-items:center;gap:0.7rem">
           <div class="wc-bal" style="color:${bal >= 0 ? 'var(--gold)' : 'var(--red)'}">${bal.toLocaleString()} ฿</div>
           ${wallets.length > 1 ? `<button class="btn-wallet-del" onclick="deleteWallet(${w.id})">✕</button>` : ''}
@@ -528,10 +600,14 @@ function renderWalletPage() {
   updateWalletDropdowns();
 }
 
-// ── 12. LOAN TRACKER ──
 let loanDisplayMode = 'person';
 
-function setLoanTab(mode, el) { loanDisplayMode = mode; document.querySelectorAll('.loan-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderLoan(); }
+function setLoanTab(mode, el) {
+  loanDisplayMode = mode;
+  document.querySelectorAll('.loan-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderLoan();
+}
 
 function renderLoan() {
   const items = window.items || [];
@@ -540,11 +616,14 @@ function renderLoan() {
   const totalBorrow = borrows.reduce((s, i) => s + i.amount, 0);
   const totalRepaid = repays.reduce((s, i) => s + i.amount, 0);
   const remain = totalBorrow - totalRepaid;
+
   document.getElementById('loanTotalBorrow').innerText = totalBorrow.toLocaleString() + ' ฿';
   document.getElementById('loanTotalRepaid').innerText = totalRepaid.toLocaleString() + ' ฿';
+
   const remEl = document.getElementById('loanTotalRemain');
-  remEl.innerText = remain.toLocaleString() + ' ฿';
-  remEl.style.color = remain > 0 ? 'var(--red)' : (remain < 0 ? 'var(--green)' : 'var(--muted)');
+  const activeRemain = Math.max(remain, 0);
+  remEl.innerText = activeRemain.toLocaleString() + ' ฿';
+  remEl.style.color = activeRemain > 0 ? 'var(--red)' : 'var(--green)';
 
   if (loanDisplayMode === 'list') {
     document.getElementById('loanListHeader').innerText = `รายการทั้งหมด (${borrows.length + repays.length})`;
@@ -560,15 +639,37 @@ function renderLoan() {
         </div>
       </div>`).join('') : '<div class="empty">— ไม่มีรายการ —</div>';
   } else {
-    document.getElementById('loanListHeader').innerText = 'สรุปรายคน';
+    document.getElementById('loanListHeader').innerText = 'สรุปรายคน (ยังค้างอยู่)';
+
     const persons = new Map();
-    borrows.forEach(i => { let p = persons.get(i.name) || { borrow: 0, repay: 0, txns: [] }; p.borrow += i.amount; p.txns.push({ ...i, ltype: 'borrow' }); persons.set(i.name, p); });
-    repays.forEach(i => { let p = persons.get(i.name) || { borrow: 0, repay: 0, txns: [] }; p.repay += i.amount; p.txns.push({ ...i, ltype: 'repay' }); persons.set(i.name, p); });
-    const sorted = [...persons.entries()].sort((a, b) => (b[1].borrow - b[1].repay) - (a[1].borrow - a[1].repay));
-    if (!sorted.length) { document.getElementById('loanList').innerHTML = '<div class="empty">— ไม่มีข้อมูล —</div>'; return; }
-    document.getElementById('loanList').innerHTML = sorted.map(([name, data]) => {
+    borrows.forEach(i => {
+      let p = persons.get(i.name) || { borrow: 0, repay: 0, txns: [] };
+      p.borrow += i.amount;
+      p.txns.push({ ...i, ltype: 'borrow' });
+      persons.set(i.name, p);
+    });
+    repays.forEach(i => {
+      let p = persons.get(i.name) || { borrow: 0, repay: 0, txns: [] };
+      p.repay += i.amount;
+      p.txns.push({ ...i, ltype: 'repay' });
+      persons.set(i.name, p);
+    });
+
+    const filtered = [...persons.entries()]
+      .filter(([name, data]) => (data.borrow - data.repay) > 0)
+      .sort((a, b) => (b[1].borrow - b[1].repay) - (a[1].borrow - a[1].repay));
+
+    if (!filtered.length) {
+      document.getElementById('loanList').innerHTML = `
+        <div class="empty-state" style="padding:2rem;text-align:center;color:var(--muted);">
+          <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
+          <div style="font-size:0.9rem;">ไม่มีหนี้ค้าง — ทุกคนเคลียร์แล้ว!</div>
+        </div>`;
+      return;
+    }
+
+    document.getElementById('loanList').innerHTML = filtered.map(([name, data]) => {
       const rem = data.borrow - data.repay;
-      const cleared = rem <= 0;
       const pct = data.borrow > 0 ? Math.min((data.repay / data.borrow) * 100, 100).toFixed(0) : 100;
       const rows = [...data.txns].sort((a, b) => b.date.localeCompare(a.date)).map(t => `
         <div class="person-txn-row">
@@ -576,8 +677,11 @@ function renderLoan() {
           <span>${escapeHtml(t.date)}</span>
           <span style="color:${t.ltype === 'borrow' ? 'var(--red)' : 'var(--green)'}">${t.ltype === 'borrow' ? '+' : '-'}${t.amount.toLocaleString()} ฿</span>
         </div>`).join('');
-      return `<div class="person-card ${cleared ? 'cleared' : ''}">
-        <div class="person-top"><span class="person-name">${escapeHtml(name)} ${cleared ? '<span class="loan-done-badge">✓ เคลียร์</span>' : ''}</span><span class="person-remain" style="color:${rem > 0 ? 'var(--red)' : 'var(--green)'}">${rem > 0 ? '+' : ''}${rem.toLocaleString()} ฿</span></div>
+      return `<div class="person-card">
+        <div class="person-top">
+          <span class="person-name">${escapeHtml(name)}</span>
+          <span class="person-remain" style="color:var(--red)">${rem.toLocaleString()} ฿</span>
+        </div>
         <div class="person-prog"><div class="person-prog-fill" style="width:${pct}%"></div></div>
         <div class="person-prog-text">คืนแล้ว ${data.repay.toLocaleString()} / ${data.borrow.toLocaleString()} ฿ (${pct}%)</div>
         <div class="person-txns">${rows}</div>
@@ -586,10 +690,14 @@ function renderLoan() {
   }
 }
 
-// ── 13. INSTALLMENT ──
 let instTab = 'phone';
 
-function setInstTab(type, el) { instTab = type; document.querySelectorAll('.inst-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderInstallment(); }
+function setInstTab(type, el) {
+  instTab = type;
+  document.querySelectorAll('.inst-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderInstallment();
+}
 
 function addInstallment() {
   const name = document.getElementById('instName').value.trim();
@@ -668,7 +776,7 @@ function saveInstPay() {
   renderInstallment();
   renderList();
   renderSearchList();
-  updateSummary();
+  update();
   renderWalletPage();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
@@ -709,10 +817,14 @@ function renderInstallment() {
   }).join('');
 }
 
-// ── 14. CATEGORIES ──
 let catTab = 'income';
 
-function setCatTab(type, el) { catTab = type; document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active')); if (el) el.classList.add('active'); renderCatList(); }
+function setCatTab(type, el) {
+  catTab = type;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderCatList();
+}
 
 function addCategory() {
   const name = document.getElementById('catNameInput').value.trim();
@@ -722,7 +834,7 @@ function addCategory() {
   saveLocalStorage();
   document.getElementById('catNameInput').value = '';
   renderCatList();
-  updateCategoryDropdown(document.getElementById('typeSelect').value, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
 async function deleteCategory(type, name) {
@@ -731,17 +843,18 @@ async function deleteCategory(type, name) {
   window.categories[type] = window.categories[type].filter(c => c !== name);
   saveLocalStorage();
   renderCatList();
-  updateCategoryDropdown(document.getElementById('typeSelect').value, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
-function resetCategories() {
+async function resetCategories() {
+  if (!await showConfirmModal('รีเซ็ตหมวดหมู่ทั้งหมดกลับเป็นค่าเริ่มต้น? หมวดที่เพิ่มไว้จะหายไป', false)) return;
   window.categories = {
     income: [...DEFAULT_DATA.categories.income],
     expense: [...DEFAULT_DATA.categories.expense]
   };
   saveLocalStorage();
   renderCatList();
-  updateCategoryDropdown(document.getElementById('typeSelect').value, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
   showToast('รีเซ็ตหมวดแล้ว');
 }
 
@@ -757,7 +870,6 @@ function renderCatList() {
     </div>`).join('');
 }
 
-// ── 15. BUDGET & UPCOMING ──
 async function addBudget() {
   const month = document.getElementById('budgetMonthSelect').value;
   if (!month) return showToast('เลือกเดือนก่อน');
@@ -834,7 +946,6 @@ function renderBudgetPage() {
     catSelect.innerHTML = '<option value="">-- เลือกหมวดรายจ่าย --</option>' +
       (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
-
   const upcomingCatSel = document.getElementById('upcomingCategorySelect');
   if (upcomingCatSel) {
     upcomingCatSel.innerHTML = '<option value="">-- หมวดหมู่ --</option>' +
@@ -910,11 +1021,10 @@ function renderBudgetPage() {
   }
 }
 
-// ── 16. DASHBOARD / SUMMARY ──
 let chartBarType = 'expense';
 let chartDonutType = 'expense';
 
-function renderSummary() {
+function render() {
   const month = document.getElementById('sumMonthSelect').value || today.slice(0, 7);
   const items = window.items || [];
   const monthItems = items.filter(i => i.date.startsWith(month));
@@ -971,7 +1081,6 @@ function initMonthSelect() {
   sel.value = curVal && months.includes(curVal) ? curVal : thisMonth;
 }
 
-// ── 17. CANVAS CHARTS ──
 const COLORS_EXP = ['#ff4f64', '#ff8c5a', '#ffb347', '#ffd700', '#c8a84b', '#e07b9a', '#ff6b8a', '#ffaa44', '#e6861a', '#d4604a'];
 const COLORS_INC = ['#39d98a', '#4f9bff', '#a78bfa', '#34d399', '#60a5fa', '#818cf8', '#2dd4bf', '#38bdf8', '#c084fc', '#86efac'];
 
@@ -1128,50 +1237,100 @@ function drawDonut(monthItems, type) {
   }
 }
 
-// ── 18. PAGE ROUTING ──
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+function toggleMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.querySelector('.hamburger-btn');
+  const isOpen = sidebar.classList.contains('open');
 
-  const pageEl = document.getElementById(id);
-  if (pageEl) pageEl.classList.add('active');
-  if (el) el.classList.add('active');
-
-  if (id === 'page-summary') { initMonthSelect(); renderSummary(); }
-  if (id === 'page-category') renderCatList();
-  if (id === 'page-loan') renderLoan();
-  if (id === 'page-install') renderInstallment();
-  if (id === 'page-wallet') renderWalletPage();
-  if (id === 'page-budget') renderBudgetPage();
-  if (id === 'page-search') {
-    const inp = document.getElementById('searchInputPage');
-    if (inp) {
-      setTimeout(() => inp.focus(), 100);
-      renderSearchList();
-    }
-    renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
-  }
-  if (id === 'page-home') {
-    renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    btn.classList.add('active');
+    btn.setAttribute('aria-expanded', 'true');
   }
 }
 
-// ── 19. INITIALIZE APP ──
+function closeMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.querySelector('.hamburger-btn');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+  btn.classList.remove('active');
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+
+  const pageEl = document.getElementById(id);
+  if (pageEl) pageEl.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+    if (el.classList.contains('sidebar-btn')) {
+      el.classList.add('active');
+    }
+  }
+
+  switch(id) {
+    case 'page-summary':
+      initMonthSelect();
+      render();
+      break;
+    case 'page-category':
+      renderCatList();
+      render();
+      break;
+    case 'page-loan':
+      renderLoan();
+      break;
+    case 'page-install':
+      renderInstallment();
+      break;
+    case 'page-wallet':
+      renderWalletPage();
+      break;
+    case 'page-budget':
+      renderBudgetPage();
+      break;
+    case 'page-search':
+      const inp = document.getElementById('searchInputPage');
+      if (inp) setTimeout(() => inp.focus(), 100);
+      renderSearchList();
+      renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
+      break;
+    case 'page-home':
+      renderWalletFilterBar('walletFilterBar', 'walletFilter');
+      break;
+  }
+
+  update();
+  closeMenu();
+}
+
 function initApp() {
   loadLocalStorage();
+
   displayCurrentDate();
 
-  const initialType = document.getElementById('typeSelect')?.value || 'income';
-  updateCategoryDropdown(initialType, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
   updateCategoryDropdown('income', 'editCategory');
 
-  updateWalletDropdowns(); // ✅ แก้ชื่อฟังก์ชัน
+  updateWalletDropdowns();
   renderWalletFilterBar('walletFilterBar', 'walletFilter');
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   renderList();
   renderSearchList();
-  updateSummary();
-  renderWalletPage(); // ✅ เรียกครั้งเดียวพอ
+  update();
+  renderWalletPage();
 
   ['dateInput', 'instDate', 'instPayDate'].forEach(id => {
     const el = document.getElementById(id);
@@ -1181,7 +1340,6 @@ function initApp() {
   const monthLbl = document.getElementById('monthLabel');
   if (monthLbl) monthLbl.innerText = new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
-  // Modal events (Edit)
   const modalBg = document.getElementById('modalBg');
   if (modalBg) {
     modalBg.addEventListener('click', e => {
@@ -1195,7 +1353,6 @@ function initApp() {
     });
   }
 
-  // Confirm Modal events
   const confirmBg = document.getElementById('confirmModalBg');
   if (confirmBg) {
     confirmBg.addEventListener('click', e => {
@@ -1214,10 +1371,10 @@ function initApp() {
     if (confirmResolver) { confirmResolver(false); confirmResolver = null; }
   });
 
-  document.getElementById('typeSelect')?.addEventListener('change', function() { updateCategoryDropdown(this.value, 'categorySelect'); });
-  document.getElementById('editType')?.addEventListener('change', function() { updateCategoryDropdown(this.value, 'editCategory'); });
+  document.getElementById('editType')?.addEventListener('change', function() {
+    updateCategoryDropdown(this.value, 'editCategory');
+  });
 
-  // Search input auto-search (debounce)
   const searchInput = document.getElementById('searchInputPage');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
@@ -1231,14 +1388,14 @@ function initApp() {
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-      const summaryPage = document.getElementById('page-summary');
-      if (summaryPage && summaryPage.classList.contains('active')) {
-        renderSummary();
+      const pageSummary = document.getElementById('page-summary');
+      if (pageSummary && pageSummary.classList.contains('active')) {
+        render();
       }
     }, 200);
   });
 
-  console.log('🚀 Budget//Ctrl พร้อมใช้งาน (FULL FIXED)');
+  console.log('🚀 Budget//Ctrl พร้อมใช้งาน (Homepage ปรับโหมดแล้ว)');
 }
 
 initApp();
