@@ -3,73 +3,154 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Manage-Cashflow</title>
+  <title>บันทึกการเงิน</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+  </style>
 </head>
 <body>
 
 <div class="app-header">
-  <h1>Manage<span>//</span>Cash Flow <span class="header-date" id="CurrenDate"> 
-  </span></h1>
-  <nav class="nav-grid">
-    <button class="nav-btn active" onclick="showPage('page-home',this)"><span
-    class="nav-icon">📝</span>หน้าหลัก</button>
-    <button class="nav-btn" onclick="showPage('page-wallet',this)"><span class="nav-icon">💲</span>กระเป๋าเงิน</button>
-    <button class="nav-btn" onclick="showPage('page-loan',this)"><span class="nav-icon">♻️</span>เบิกล่วงหน้า</button>
-    <button class="nav-btn" onclick="showPage('page-install',this)"><span class="nav-icon">💳</span>สินเชื่อ</button>
-    <button class="nav-btn" onclick="showPage('page-category',this)"><span class="nav-icon">💾</span>หมวดหมู่</button>
-    <button class="nav-btn" onclick="showPage('page-summary',this)"><span class="nav-icon">📊</span>สรุป</button>
-    <button class="nav-btn" onclick="showPage('page-budget',this)"><span class="nav-icon">⚠️</span>BUDGET</button>
-    <button class="nav-btn" onclick="showPage('page-search',this)"><span class="nav-icon">🔍</span>SEARCH</button>
+  <div style="display:flex;align-items:center;gap:0.6rem;">
+    <button class="hamburger-btn" onclick="toggleMenu()" aria-label="เมนู" aria-expanded="false">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+    <h1>Manage<span>//</span>Cash Flow</h1>
+    <span id="CurrentDate" style="font-size:0.65rem;color:var(--muted);margin-left:0.3rem;"></span>
+  </div>
+  <button id="exportChatBtn" onclick="exportForChat()" aria-label="ส่งออกข้อมูลเพื่อแชท" title="ส่งออกข้อมูลเพื่อแชท" style="background:rgba(200,168,75,.1);border:1px solid var(--gold-dim);color:var(--gold);font-size:10.5px;padding:6px 10px;border-radius:8px;letter-spacing:.02em;">📤</button>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMenu()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span style="font-size:1rem;font-weight:700;color:var(--gold);">=เมนู</span>
+    <button class="sidebar-close" onclick="closeMenu()" aria-label="ปิดเมนู">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="sidebar-btn active" onclick="showPage('page-home',this)">
+      <span class="nav-icon">📝</span> หน้าหลัก
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-wallet',this)">
+      <span class="nav-icon">💲</span> กระเป๋าเงิน
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-loan',this)">
+      <span class="nav-icon">♻️</span> เบิกล่วงหน้า
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-install',this)">
+      <span class="nav-icon">💳</span> สินเชื่อ
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-category',this)">
+      <span class="nav-icon">💾</span> หมวดหมู่
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-summary',this)">
+      <span class="nav-icon">📊</span> สรุป
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-budget',this)">
+      <span class="nav-icon">⚠️</span> งบประมาณ
+    </button>
+    <button class="sidebar-btn" onclick="showPage('page-search',this)">
+      <span class="nav-icon">🔍</span> ค้นหา
+    </button>
   </nav>
 </div>
 
-<!--Homepage (INCOME-EXPENSES) -->
+<div class="nav-grid">
+  <button class="nav-btn active" onclick="showPage('page-home',this)"><span class="nav-icon">📝</span>หน้าหลัก</button>
+  <button class="nav-btn" onclick="showPage('page-wallet',this)"><span class="nav-icon">💲</span>กระเป๋าเงิน</button>
+  <button class="nav-btn" onclick="showPage('page-loan',this)"><span class="nav-icon">♻️</span>เบิกล่วงหน้า</button>
+  <button class="nav-btn" onclick="showPage('page-install',this)"><span class="nav-icon">💳</span>สินเชื่อ</button>
+  <button class="nav-btn" onclick="showPage('page-category',this)"><span class="nav-icon">💾</span>หมวดหมู่</button>
+  <button class="nav-btn" onclick="showPage('page-summary',this)"><span class="nav-icon">📊</span>สรุป</button>
+  <button class="nav-btn" onclick="showPage('page-budget',this)"><span class="nav-icon">⚠️</span>งบประมาณ</button>
+  <button class="nav-btn" onclick="showPage('page-search',this)"><span class="nav-icon">🔍</span>ค้นหา</button>
+</div>
+
 <div class="summary-grid">
-    <div class="s-card income">
-      <div class="sc-label">รายรับ</div>
-      <div class="sc-amount" id="totalIncome">0</div>
-    </div>
-    <div class="s-card expense">
-      <div class="sc-label">รายจ่าย</div>
-      <div class="sc-amount" id="totalExpense">0</div>
-    </div>
-    <div class="s-card balance">
-      <div class="sc-label">คงเหลือ</div>
-      <div class="sc-amount" id="balance">0</div>
-    </div>
+  <div class="s-card income">
+    <div class="sc-label">รายรับ</div>
+    <div class="sc-amount" id="totalIncome">0</div>
   </div>
+  <div class="s-card expense">
+    <div class="sc-label">รายจ่าย</div>
+    <div class="sc-amount" id="totalExpense">0</div>
+  </div>
+  <div class="s-card balance">
+    <div class="sc-label">คงเหลือ</div>
+    <div class="sc-amount" id="balance">0</div>
+  </div>
+</div>
+
 <div class="page active" id="page-home">
-  <div class="page-title">︎homepage</div>
+  <div class="page-title">︎หน้าหลัก</div>
   <div class="page-sub" id="monthLabel"></div>
 
   <div class="cp-form">
-    <input type="date" id="dateInput">
-    <input type="text" id="nameInput" placeholder="รายการ">
-    <input type="number" id="amountInput" placeholder="จำนวนเงิน" min="0">
-    <select id="typeSelect">
-      <option value="income">รายรับ</option>
-      <option value="expense">รายจ่าย</option>
-    </select>
-    <select id="walletSelect"></select>
-    <select id="categorySelect"></select>
+
+    <div class="form-row">
+      <div class="form-group date-group">
+        <label for="dateInput">วันที่</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="form-group name-group">
+        <label for="nameInput">รายการ</label>
+        <input type="text" id="nameInput" placeholder="รายการ">
+      </div>
+      <div class="form-group mode-group">
+        <label>โหมด</label>
+        <div class="mode-toggle">
+          <button type="button" class="mode-btn income active" data-mode="income" onclick="setMode('income', this)">● รายรับ</button>
+          <button type="button" class="mode-btn expense" data-mode="expense" onclick="setMode('expense', this)">○ รายจ่าย</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group category-group">
+        <label for="categorySelect">หมวดหมู่</label>
+        <select id="categorySelect"></select>
+      </div>
+      <div class="form-group amount-group">
+        <label for="amountInput">จำนวน</label>
+        <input type="number" id="amountInput" placeholder="จำนวน" min="0">
+      </div>
+      <div class="form-group wallet-group">
+        <label for="walletSelect">บัญชี</label>
+        <select id="walletSelect"></select>
+      </div>
+      <div class="form-group submit-group">
+        <button class="btn-neon" onclick="addItem()">บันทึก</button>
+      </div>
+    </div>
+
     <div class="note-toggle">
-      <button type="button" id="noteToggleBtn" onclick="toggleNoteInput()">หมายเหตุ</button>
+      <button type="button" id="noteToggleBtn" onclick="toggleNoteInput()">📝 หมายเหตุ</button>
       <input type="text" id="noteInput" placeholder="พิมพ์หมายเหตุที่นี่" style="display:none;">
     </div>
-    <button class="btn-neon" onclick="addItem()">บันทึกรายการ</button>
   </div>
 
   <div class="toolbar">
-    <button class="btn-tool" onclick="downloadCSV()">📥EXPORT CSV</button>
+    <button class="btn-tool" onclick="downloadCSV()">📥 ส่งออก CSV</button>
     <button class="btn-tool" onclick="clearAll()">🗑 ล้างข้อมูล</button>
     <button class="btn-tool" onclick="showPage('page-search',this)">🔍 ค้นหารายการ</button>
   </div>
 
-  <!-- ✅ เพิ่ม filter และ wallet-bar กลับมา -->
   <div class="filter">
     <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
-    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">▲ รายรับ</button>
     <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
   </div>
 
@@ -78,24 +159,30 @@
   <div id="list"></div>
 </div>
 
-<!-- หน้ากระเป๋าเงิน -->
 <div class="page" id="page-wallet">
-  <div class="page-title">// WALLETS</div>
+  <div class="page-title">กระเป๋าเงิน</div>
   <div class="page-sub">จัดการกระเป๋าเงินและโอนระหว่างบัญชี</div>
 
   <div class="section-title">สรุปยอดทุกบัญชี</div>
   <div class="wsc-grid" id="walletSummary"></div>
+
   <div class="cp-form">
-    <input type="text" id="walletNameInput" placeholder="บัญชี">
-    <input type="number" id="walletInitInput" placeholder="ยอดเริ่มต้น" min="0" value="0">
+    <label for="walletNameInput" class="sr-only">ชื่อบัญชี</label>
+    <input type="text" id="walletNameInput" placeholder="ชื่อบัญชี">
+    <label for="walletInitInput" class="sr-only">ยอดเริ่มต้น</label>
+    <input type="number" id="walletInitInput" placeholder="ยอดเริ่มต้น">
     <button class="btn-neon" onclick="addWallet()">เพิ่มบัญชี</button>
   </div>
 
   <div class="section-title">โอนเงินระหว่างบัญชี</div>
   <div class="transfer-form">
+    <label for="transferFrom" class="sr-only">โอนจาก</label>
     <select id="transferFrom"></select>
+    <label for="transferTo" class="sr-only">โอนไป</label>
     <select id="transferTo"></select>
+    <label for="transferAmount" class="sr-only">จำนวนเงิน</label>
     <input type="number" id="transferAmount" placeholder="จำนวนเงิน (฿)" min="0">
+    <label for="transferNote" class="sr-only">หมายเหตุ</label>
     <input type="text" id="transferNote" placeholder="หมายเหตุ">
     <button class="btn-neon" onclick="doTransfer()">↔ โอนเงิน</button>
   </div>
@@ -104,10 +191,9 @@
   <div id="walletList"></div>
 </div>
 
-<!-- หน้ายืม-คืน -->
 <div class="page" id="page-loan">
-  <div class="page-title">// LOAN TRACKER</div>
-  <div class="page-sub">สรุปจากหมวด "ยืม" (รายรับ) และ "คืน" (รายจ่าย)</div>
+  <div class="page-title">// ติดตามยืม-คืน</div>
+  <div class="page-sub">สรุปจากหมวด "ยืม" (▲ รายรับ) และ "คืน" (รายจ่าย)</div>
 
   <div class="grid-2">
     <div class="stat-card red">
@@ -121,27 +207,26 @@
   </div>
 
   <div class="balance-row">
-    <span class="sb-label">🔴 ยังค้างอยู่</span>
+    <span class="sb-label">ยังค้างอยู่</span>
     <span class="sb-amount" id="loanTotalRemain">0 ฿</span>
   </div>
 
   <div class="loan-tabs">
-    <button class="loan-tab active" onclick="setLoanTab('person',this)">👤 รายคน</button>
-    <button class="loan-tab" onclick="setLoanTab('list',this)">📋 รายการ</button>
+    <button class="loan-tab active" onclick="setLoanTab('person',this)">รายคน</button>
+    <button class="loan-tab" onclick="setLoanTab('list',this)">รายการ</button>
   </div>
 
   <div class="list-header" id="loanListHeader">สรุปรายคน</div>
   <div id="loanList"></div>
 </div>
 
-<!-- หน้าสินเชื่อ/ผ่อน -->
 <div class="page" id="page-install">
-  <div class="page-title">// INSTALLMENT</div>
+  <div class="page-title">// สินเชื่อ</div>
   <div class="page-sub">ติดตามยอดผ่อนมือถือ & สินเชื่อ</div>
 
   <div class="grid-2">
     <div class="stat-card blue">
-      <div class="lc-label">📱 มือถือคงค้าง</div>
+      <div class="lc-label">มือถือคงค้าง</div>
       <div class="lc-amount" id="instPhoneTotal">0 ฿</div>
     </div>
     <div class="stat-card amber">
@@ -156,12 +241,19 @@
   </div>
 
   <div class="cp-form" id="instForm">
+    <label for="instName" class="sr-only">ชื่อรายการ</label>
     <input type="text" id="instName" placeholder="ชื่อรายการ">
+    <label for="instTotal" class="sr-only">ยอดกู้ / ราคา</label>
     <input type="number" id="instTotal" placeholder="ยอดกู้ / ราคา" min="0">
+    <label for="instMonthly" class="sr-only">ผ่อนต่อเดือน</label>
     <input type="number" id="instMonthly" placeholder="ผ่อนต่อเดือน" min="0">
+    <label for="instTerms" class="sr-only">จำนวนงวดทั้งหมด</label>
     <input type="number" id="instTerms" placeholder="จำนวนงวดทั้งหมด" min="1">
+    <label for="instPaid" class="sr-only">จ่ายไปแล้วกี่งวด</label>
     <input type="number" id="instPaid" placeholder="จ่ายไปแล้วกี่งวด" min="0" value="0">
+    <label for="instDate" class="sr-only">วันที่</label>
     <input type="date" id="instDate">
+    <label for="instNote" class="sr-only">หมายเหตุ</label>
     <input type="text" id="instNote" placeholder="หมายเหตุ">
     <button class="btn-neon" id="instAddBtn" onclick="addInstallment()">+ เพิ่มรายการผ่อน</button>
   </div>
@@ -170,28 +262,28 @@
   <div id="instList"></div>
 </div>
 
-<!-- หน้าหมวดหมู่ -->
 <div class="page" id="page-category">
-  <div class="page-title">// CATEGORIES</div>
+  <div class="page-title">// หมวดหมู่</div>
   <div class="page-sub">เพิ่ม-ลบหมวดหมู่ตามต้องการ</div>
   <button class="btn-reset" onclick="resetCategories()">🔄 รีเซ็ตหมวดเริ่มต้น</button>
   <div class="cat-tabs">
-    <button class="cat-tab active" onclick="setCatTab('income',this)">▲ รายรับ</button>
-    <button class="cat-tab" onclick="setCatTab('expense',this)">▼ รายจ่าย</button>
+    <button class="cat-tab active" onclick="setCatTab('income',this)">รายรับ</button>
+    <button class="cat-tab" onclick="setCatTab('expense',this)">รายจ่าย</button>
   </div>
   <div class="cat-add-row">
+    <label for="catNameInput" class="sr-only">ชื่อหมวดใหม่</label>
     <input type="text" id="catNameInput" placeholder="ชื่อหมวดใหม่">
     <button onclick="addCategory()">+ เพิ่ม</button>
   </div>
   <div id="catList"></div>
 </div>
 
-<!-- หน้า Dashboard -->
 <div class="page" id="page-summary">
-  <div class="page-title">// DASHBOARD</div>
+  <div class="page-title">// แดชบอร์ด</div>
   <div class="page-sub">ภาพรวมการเงินรายเดือน</div>
   <div class="month-sel-wrap">
-    <select id="sumMonthSelect" onchange="renderSummary()"></select>
+    <label for="sumMonthSelect" class="sr-only">เลือกเดือน</label>
+    <select id="sumMonthSelect" onchange="render()"></select>
   </div>
   <div class="sum-cards">
     <div class="sum-card income">
@@ -207,16 +299,18 @@
     <span class="sb-label">คงเหลือเดือนนี้</span>
     <span class="sb-amount" id="sumBalance">0</span>
   </div>
+
   <div class="chart-wrap">
-    <div class="chart-title">// BAR CHART — แยกหมวด</div>
+    <div class="chart-title">// กราฟแท่ง — แยกหมวด</div>
     <div class="chart-tabs">
       <button class="chart-tab active" onclick="setChartTab('expense',this)">▼ รายจ่าย</button>
       <button class="chart-tab" onclick="setChartTab('income',this)">▲ รายรับ</button>
     </div>
     <canvas id="barCanvas" height="100"></canvas>
   </div>
+
   <div class="chart-wrap">
-    <div class="chart-title">// DONUT CHART — สัดส่วน</div>
+    <div class="chart-title">// กราฟโดนัท — สัดส่วน</div>
     <div class="chart-tabs">
       <button class="chart-tab active" onclick="setDonutTab('expense',this)">▼ รายจ่าย</button>
       <button class="chart-tab" onclick="setDonutTab('income',this)">▲ รายรับ</button>
@@ -224,6 +318,7 @@
     <canvas id="donutCanvas" height="300"></canvas>
     <div class="donut-legend" id="donutLegend"></div>
   </div>
+
   <div class="section-title">รายจ่ายแยกหมวด</div>
   <div id="expenseBar"></div>
   <div class="section-title">รายรับแยกหมวด</div>
@@ -237,23 +332,22 @@
   </div>
 </div>
 
-<!-- หน้าตั้งงบประมาณล่วงหน้า (รวม Upcoming) -->
 <div class="page" id="page-budget">
-  <div class="page-title">// BUDGET vs ACTUAL</div>
+  <div class="page-title">// งบประมาณ vs จริง</div>
   <div class="page-sub">ตั้งงบประมาณล่วงหน้า เทียบกับจ่ายจริง</div>
-
   <div class="month-sel-wrap">
+    <label for="budgetMonthSelect" class="sr-only">เลือกเดือน</label>
     <select id="budgetMonthSelect" onchange="renderBudgetPage()"></select>
   </div>
-
   <div class="cp-form">
+    <label for="budgetCategorySelect" class="sr-only">เลือกหมวดรายจ่าย</label>
     <select id="budgetCategorySelect">
       <option value="">-- เลือกหมวดรายจ่าย --</option>
     </select>
+    <label for="budgetAmountInput" class="sr-only">วงเงินงบประมาณ</label>
     <input type="number" id="budgetAmountInput" placeholder="วงเงินงบประมาณ (฿)" min="0">
     <button class="btn-neon" onclick="addBudget()">+ ตั้งงบประมาณ</button>
   </div>
-
   <div class="section-title">ภาพรวมเดือนนี้</div>
   <div class="summary-grid" style="grid-template-columns:1fr 1fr;">
     <div class="s-card expense">
@@ -265,14 +359,15 @@
       <div class="sc-amount" id="budgetTotalSpent">0</div>
     </div>
   </div>
-
   <div class="list-header" id="budgetListHeader">รายการงบประมาณ</div>
   <div id="budgetList"></div>
-
   <div class="section-title">📅 รายการที่คาดว่าจะจ่ายในเดือนนี้</div>
   <div class="cp-form">
+    <label for="upcomingName" class="sr-only">รายการ</label>
     <input type="text" id="upcomingName" placeholder="รายการ">
+    <label for="upcomingAmount" class="sr-only">จำนวนเงิน</label>
     <input type="number" id="upcomingAmount" placeholder="จำนวนเงิน (฿)" min="0">
+    <label for="upcomingCategorySelect" class="sr-only">หมวดหมู่</label>
     <select id="upcomingCategorySelect">
       <option value="">-- หมวดหมู่ --</option>
     </select>
@@ -281,36 +376,31 @@
   <div id="upcomingBudgetList"></div>
 </div>
 
-<!-- ===== หน้า SEARCH (แก้ไขแล้ว) ===== -->
 <div class="page" id="page-search">
-  <div class="page-title">// SEARCH</div>
+  <div class="page-title">// ค้นหา</div>
   <div class="page-sub">ค้นหารายการจากชื่อ, หมายเหตุ, หรือหมวดหมู่</div>
-
   <div class="search-wrap">
+    <label for="searchInputPage" class="sr-only">ค้นหา</label>
     <input type="text" id="searchInputPage" placeholder="🔍 พิมพ์คำค้น...">
   </div>
-
-  <!-- ✅ เพิ่ม filter และ wallet-bar ในหน้า search -->
   <div class="filter">
     <button class="filter-btn active" onclick="setFilter('all',this)">ทั้งหมด</button>
-    <button class="filter-btn" onclick="setFilter('income',this)">รายรับ</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">▲ รายรับ</button>
     <button class="filter-btn" onclick="setFilter('expense',this)">รายจ่าย</button>
   </div>
-
   <div class="wallet-bar" id="walletFilterBarSearch"></div>
   <div class="list-header" id="searchListHeader">ผลลัพธ์</div>
   <div id="searchList"></div>
 </div>
 
-<!-- Modal แก้ไขรายการ -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <h2>✏ EDIT_ITEM</h2>
+    <h2>✏️ แก้ไขรายการ</h2>
     <input type="hidden" id="editId">
     <div class="modal-row"><label>วันที่</label><input type="date" id="editDate"></div>
     <div class="modal-row"><label>รายการ</label><input type="text" id="editName"></div>
-    <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="editNote"></div>
     <div class="modal-row"><label>จำนวนเงิน</label><input type="number" id="editAmount" min="0"></div>
+    <div class="modal-row"><label>หมายเหตุ</label><input type="text" id="editNote"></div>
     <div class="modal-row"><label>ประเภท</label><select id="editType"><option value="income">▲ รายรับ</option><option value="expense">▼ รายจ่าย</option></select></div>
     <div class="modal-row"><label>บัญชี</label><select id="editWallet"></select></div>
     <div class="modal-row"><label>หมวดหมู่</label><select id="editCategory"></select></div>
@@ -321,10 +411,9 @@
   </div>
 </div>
 
-<!-- Modal จ่ายค่างวด -->
 <div class="modal-bg" id="instPayModalBg">
   <div class="modal">
-    <h2 id="instPayTitle">💳 PAY_INSTALLMENT</h2>
+    <h2 id="instPayTitle">💳 จ่ายงวด</h2>
     <input type="hidden" id="instPayId">
     <div class="modal-row"><label>จำนวนงวดที่จ่าย</label><input type="number" id="instPayQty" min="1" value="1"></div>
     <div class="modal-row"><label>วันที่จ่าย</label><input type="date" id="instPayDate"></div>
@@ -337,7 +426,6 @@
   </div>
 </div>
 
-<!-- ===== CONFIRM MODAL ===== -->
 <div class="modal-bg" id="confirmModalBg">
   <div class="modal" style="max-width:340px;">
     <h2 id="confirmTitle" style="color:var(--red);">⚠️ ยืนยันการดำเนินการ</h2>
@@ -353,5 +441,4 @@
 
 <script src="script.js" defer></script>
 </body>
-
 </html>
