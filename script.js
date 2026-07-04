@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'budgetCtrl_LocalData';
 
+
 window.items = [];
 window.wallets = [];
 window.installments = [];
