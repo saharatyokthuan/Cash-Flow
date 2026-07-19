@@ -1,6 +1,5 @@
 const STORAGE_KEY = 'budgetCtrl_LocalData';
 
-
 window.items = [];
 window.wallets = [];
 window.installments = [];
@@ -387,41 +386,6 @@ function saveEdit() {
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('บันทึกแล้ว');
 }
-function downloadXLSX() {
-  // ตรวจสอบว่ามีข้อมูลหรือไม่
-  if (!window.items || window.items.length === 0) {
-    showToast('ไม่มีข้อมูลที่จะส่งออก');
-    return;
-  }
-
-  try {
-    // 1. เตรียมข้อมูลให้อยู่ในรูปแบบ Array of Objects
-    const data = window.items.map(i => {
-      // หาชื่อบัญชีจาก walletId
-      const walletName = window.wallets.find(w => w.id === i.walletId)?.name || '';
-      
-      // แปลงประเภทเป็นภาษาไทย
-      const typeThai = i.type === 'income' ? 'รายรับ' : 'รายจ่าย';
-      
-      // จัดรูปแบบวันที่ (จาก YYYY-MM-DD เป็น DD/MM/YYYY)
-      let formattedDate = i.date || '';
-      if (formattedDate) {
-        const parts = formattedDate.split('-');
-        if (parts.length === 3) {
-          formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-      }
-
-      return {
-        'วันที่': formattedDate,
-        'รายการ': i.name || '',
-        'จำนวน (บาท)': i.amount || 0,
-        'หมวดหมู่': i.category || '',
-        'ประเภท': typeThai,
-        'หมายเหตุ': i.note || '',
-        'บัญชี': walletName
-      };
-    });
 
 function downloadCSV() {
   if (!window.items.length) return showToast('ไม่มีข้อมูล');
@@ -451,6 +415,109 @@ function downloadCSV() {
   a.click();
   URL.revokeObjectURL(a.href);
   showToast('ดาวน์โหลด CSV สำเร็จ');
+}
+
+// ============================================
+// ส่งออก XLSX (ใช้ไลบรารี xlsx)
+// ============================================
+function downloadXLSX() {
+  if (!window.items || window.items.length === 0) {
+    showToast('ไม่มีข้อมูลที่จะส่งออก');
+    return;
+  }
+
+  try {
+    const rows = window.items.map(item => {
+      const wallet = window.wallets.find(w => w.id === item.walletId);
+      return {
+        'วันที่': item.date || '',
+        'รายการ': item.name || '',
+        'จำนวน': item.amount || 0,
+        'หมวดหมู่': item.category || '',
+        'ประเภท': item.type === 'income' ? 'รายรับ' : 'รายจ่าย',
+        'หมายเหตุ': item.note || '',
+        'บัญชี': wallet ? wallet.name : ''
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Budget');
+    XLSX.writeFile(wb, `budget_${today}.xlsx`);
+    showToast('ดาวน์โหลด XLSX สำเร็จ');
+  } catch (e) {
+    console.error(e);
+    showToast('เกิดข้อผิดพลาดในการส่งออก');
+  }
+}
+
+// ============================================
+// นำเข้า XLSX
+// ============================================
+function importXLSX(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet);
+
+      if (!json.length) {
+        showToast('ไฟล์ไม่มีข้อมูล');
+        return;
+      }
+
+      let added = 0;
+      json.forEach(row => {
+        const name = (row['รายการ'] || '').trim();
+        const amount = parseFloat(row['จำนวน']) || 0;
+        if (!name || amount <= 0) return;
+
+        const type = row['ประเภท'] === 'รายรับ' ? 'income' : 'expense';
+        const category = row['หมวดหมู่'] || 'อื่นๆ';
+        const note = row['หมายเหตุ'] || '';
+        let date = today;
+        if (row['วันที่']) {
+          const d = String(row['วันที่']).split('-');
+          if (d.length === 3) {
+            date = `${d[0]}-${d[1].padStart(2, '0')}-${d[2].padStart(2, '0')}`;
+          }
+        }
+        const walletName = row['บัญชี'] || '';
+        let walletId = window.wallets.find(w => w.name === walletName)?.id || window.wallets[0]?.id || 1;
+
+        window.items.push({
+          id: Date.now() + Math.random() * 1000,
+          name,
+          amount,
+          type,
+          date,
+          note,
+          category,
+          walletId
+        });
+        added++;
+      });
+
+      saveLocalStorage();
+      renderList();
+      renderSearchList();
+      update();
+      renderWalletPage();
+      renderWalletFilterBar('walletFilterBar', 'walletFilter');
+      renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
+      showToast(`นำเข้า ${added} รายการสำเร็จ`);
+    } catch (e) {
+      console.error(e);
+      showToast('นำเข้าไม่สำเร็จ');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  event.target.value = '';
 }
 
 function renderList() {
