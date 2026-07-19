@@ -387,6 +387,41 @@ function saveEdit() {
   renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('บันทึกแล้ว');
 }
+function downloadXLSX() {
+  // ตรวจสอบว่ามีข้อมูลหรือไม่
+  if (!window.items || window.items.length === 0) {
+    showToast('ไม่มีข้อมูลที่จะส่งออก');
+    return;
+  }
+
+  try {
+    // 1. เตรียมข้อมูลให้อยู่ในรูปแบบ Array of Objects
+    const data = window.items.map(i => {
+      // หาชื่อบัญชีจาก walletId
+      const walletName = window.wallets.find(w => w.id === i.walletId)?.name || '';
+      
+      // แปลงประเภทเป็นภาษาไทย
+      const typeThai = i.type === 'income' ? 'รายรับ' : 'รายจ่าย';
+      
+      // จัดรูปแบบวันที่ (จาก YYYY-MM-DD เป็น DD/MM/YYYY)
+      let formattedDate = i.date || '';
+      if (formattedDate) {
+        const parts = formattedDate.split('-');
+        if (parts.length === 3) {
+          formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+      }
+
+      return {
+        'วันที่': formattedDate,
+        'รายการ': i.name || '',
+        'จำนวน (บาท)': i.amount || 0,
+        'หมวดหมู่': i.category || '',
+        'ประเภท': typeThai,
+        'หมายเหตุ': i.note || '',
+        'บัญชี': walletName
+      };
+    });
 
 function downloadCSV() {
   if (!window.items.length) return showToast('ไม่มีข้อมูล');
