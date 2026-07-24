@@ -273,7 +273,7 @@ body {
 }
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1.2fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 .form-group {
@@ -647,7 +647,7 @@ body {
 
 .transfer-form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
   background: var(--bg-card);
   border-radius: 12px;
@@ -663,6 +663,8 @@ body {
   padding: 6px 8px;
   color: var(--text);
   font-size: 0.8rem;
+  width: 100%;
+  min-width: 0;
 }
 .transfer-form button {
   grid-column: 1 / -1;

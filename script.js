@@ -4,8 +4,7 @@ window.items = [];
 window.wallets = [];
 window.installments = [];
 window.categories = {};
-window.budgets = [];
-window.upcoming = [];
+window.bills = [];
 window.walletFilter = 'all';
 window.walletFilterSearch = 'all';
 window.editTargetId = null;
@@ -24,25 +23,25 @@ const DEFAULT_DATA = {
     income: ['เงินเดือน', 'ยืม', 'โอน', 'อื่นๆ'],
     expense: ['อาหาร', 'เดินทาง', 'ค่าเช่า', 'บันเทิง', 'ค่าน้ำไฟ', 'อินเทอร์เน็ต', 'ผ่อนมือถือ', 'ผ่อนสินเชื่อ', 'คืน', 'โอน', 'อื่นๆ']
   },
-  budgets: [],
-  upcoming: []
+  bills: []
 };
 
 const tzoffset = (new Date()).getTimezoneOffset() * 60000;
 const today = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
 
+// บันทึกข้อมูลทั้งหมดลง localStorage ของเบราว์เซอร์
 function saveLocalStorage() {
   const data = {
     items: window.items || [],
     wallets: window.wallets || [],
     installments: window.installments || [],
     categories: window.categories || {},
-    budgets: window.budgets || [],
-    upcoming: window.upcoming || []
+    bills: window.bills || []
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+// โหลดข้อมูลจาก localStorage ตอนเปิดแอป (ถ้าไม่มีให้ใช้ค่าเริ่มต้น)
 function loadLocalStorage() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -52,10 +51,23 @@ function loadLocalStorage() {
       window.wallets = data.wallets || DEFAULT_DATA.wallets;
       window.installments = data.installments || [];
       window.categories = data.categories || DEFAULT_DATA.categories;
-      window.budgets = data.budgets || [];
-      window.upcoming = data.upcoming || [];
+      window.bills = data.bills || [];
 
+      // ถ้าเคยมีข้อมูล "รายการคาดว่าจะจ่าย" แบบเก่า ให้แปลงมาเป็นบิลใหม่อัตโนมัติ (ไม่ทำให้ข้อมูลหาย)
       let migrated = false;
+      if (!data.bills && Array.isArray(data.upcoming) && data.upcoming.length) {
+        window.bills = data.upcoming.map(u => ({
+          id: u.id,
+          name: u.name,
+          amount: u.amount,
+          dueDate: today,
+          status: 'unpaid',
+          repeatMonthly: false,
+          category: u.category || 'อื่นๆ',
+          walletId: window.wallets[0]?.id || 1
+        }));
+        migrated = true;
+      }
       if (window.categories.income && !window.categories.income.includes('โอน')) {
         window.categories.income.push('โอน');
         migrated = true;
@@ -73,6 +85,7 @@ function loadLocalStorage() {
   }
 }
 
+// ตั้งค่าข้อมูลเริ่มต้น (ใช้ตอนยังไม่เคยมีข้อมูล หรือข้อมูลเสีย)
 function loadDefault() {
   window.items = [...DEFAULT_DATA.items];
   window.wallets = [...DEFAULT_DATA.wallets];
@@ -81,11 +94,11 @@ function loadDefault() {
     income: [...DEFAULT_DATA.categories.income],
     expense: [...DEFAULT_DATA.categories.expense]
   };
-  window.budgets = [...DEFAULT_DATA.budgets];
-  window.upcoming = [...DEFAULT_DATA.upcoming];
+  window.bills = [...DEFAULT_DATA.bills];
   saveLocalStorage();
 }
 
+// รวมข้อมูลทั้งหมดเป็น JSON สำหรับส่งออก/แชร์
 function exportForChat() {
   const payload = {
     source: 'budgetCtrl',
@@ -94,8 +107,7 @@ function exportForChat() {
     wallets: window.wallets || [],
     installments: window.installments || [],
     categories: window.categories || {},
-    budgets: window.budgets || [],
-    upcoming: window.upcoming || []
+    bills: window.bills || []
   };
   const json = JSON.stringify(payload);
 
@@ -121,6 +133,7 @@ function exportForChat() {
   });
 }
 
+// แสดงข้อมูลสำรองถ้าส่งออกไฟล์แบบปกติไม่ได้
 function showExportFallback(json) {
   let bg = document.getElementById('exportFallbackBg');
   if (!bg) {
@@ -139,17 +152,20 @@ function showExportFallback(json) {
   document.getElementById('exportFallbackText').select();
 }
 
+// แปลงอักขระพิเศษกันโค้ด HTML หลุด (ป้องกัน XSS)
 function escapeHtml(str) {
   if (!str) return '';
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   return String(str).replace(/[&<>"']/g, m => map[m]);
 }
 
+// แสดงข้อความแจ้งเตือนเล็กๆ ที่มุมจอ (toast)
 function showToast(msg) {
   const t = document.getElementById('toast');
   if (t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 }
 
+// เติมตัวเลือกหมวดหมู่ลงใน dropdown ตามประเภทรายรับ/รายจ่าย
 function updateCategoryDropdown(type, selectId, cur = '') {
   const sel = document.getElementById(selectId);
   if (!sel) return;
@@ -159,6 +175,7 @@ function updateCategoryDropdown(type, selectId, cur = '') {
   ).join('');
 }
 
+// คำนวณยอดเงินคงเหลือของกระเป๋าเงินใบหนึ่ง
 function getWalletBalance(walletId) {
   const items = window.items || [];
   const inc = items.filter(i => i.type === 'income' && i.walletId === walletId).reduce((s, i) => s + i.amount, 0);
@@ -170,6 +187,7 @@ function getWalletBalance(walletId) {
 
 let confirmResolver = null;
 
+// เปิดป๊อปอัปถามยืนยันก่อนทำรายการสำคัญ (ลบ/แก้ไข)
 function showConfirmModal(message, isDanger = true) {
   return new Promise((resolve) => {
     const bg = document.getElementById('confirmModalBg');
@@ -194,6 +212,7 @@ function showConfirmModal(message, isDanger = true) {
   });
 }
 
+// เติมรายชื่อกระเป๋าเงินลงใน dropdown ทุกจุดที่ใช้
 function updateWalletDropdowns() {
   const wallets = window.wallets || [];
   const opts = wallets.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
@@ -205,6 +224,7 @@ function updateWalletDropdowns() {
   if (tTo && wallets.length > 1) tTo.value = wallets[1]?.id || wallets[0]?.id || '';
 }
 
+// วาดแถบตัวกรองกระเป๋าเงิน (ใช้ซ้ำได้หลายหน้า)
 function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'walletFilter') {
   const bar = document.getElementById(targetId);
   if (!bar) return;
@@ -219,6 +239,7 @@ function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'wallet
   bar.innerHTML = html;
 }
 
+// ตั้งค่ากระเป๋าเงินที่ใช้กรองรายการ
 function setWalletFilter(id, targetId, filterVar, el) {
   window[filterVar] = (id === 'all') ? 'all' : parseInt(id);
   const bar = document.getElementById(targetId);
@@ -233,6 +254,7 @@ function setWalletFilter(id, targetId, filterVar, el) {
   }
 }
 
+// เปิด/ปิดช่องกรอกหมายเหตุในฟอร์มเพิ่มรายการ
 function toggleNoteInput() {
   const input = document.getElementById('noteInput');
   const btn = document.getElementById('noteToggleBtn');
@@ -248,6 +270,7 @@ function toggleNoteInput() {
   }
 }
 
+// สลับโหมดรายรับ/รายจ่ายในฟอร์มหน้าแรก
 function setMode(mode, el) {
   currentMode = mode;
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -264,6 +287,7 @@ function setMode(mode, el) {
   updateCategoryDropdown(mode, 'categorySelect');
 }
 
+// เพิ่มรายการรายรับ/รายจ่ายใหม่ (จากฟอร์มหน้าแรก)
 function addItem() {
   const name = document.getElementById('nameInput').value.trim();
   const amount = parseFloat(document.getElementById('amountInput').value);
@@ -293,6 +317,7 @@ function addItem() {
   showToast('บันทึกรายการแล้ว');
 }
 
+// ลบรายการรายรับ/รายจ่าย (ต้องกดยืนยันก่อน)
 async function deleteItem(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
     window.items = window.items.filter(i => i.id !== id);
@@ -307,6 +332,7 @@ async function deleteItem(id) {
   }
 }
 
+// ล้างข้อมูลทั้งหมดในแอป (ต้องกดยืนยันก่อน)
 async function clearAll() {
   if (window.items.length && await showConfirmModal('ล้างข้อมูลทั้งหมด?')) {
     window.items = [];
@@ -321,6 +347,7 @@ async function clearAll() {
   }
 }
 
+// ตั้งค่าตัวกรองประเภทรายการในหน้าค้นหา
 function setFilter(val, el) {
   const isSearchPage = document.getElementById('page-search')?.classList.contains('active');
   if (isSearchPage) {
@@ -336,6 +363,7 @@ function setFilter(val, el) {
   }
 }
 
+// เปิดป๊อปอัปแก้ไขรายการที่เลือก
 function openEdit(id) {
   const item = window.items.find(i => i.id === id);
   if (!item) return;
@@ -355,8 +383,10 @@ function openEdit(id) {
   document.getElementById('modalBg').classList.add('open');
 }
 
+// ปิดป๊อปอัปแก้ไขรายการ
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
 
+// บันทึกการแก้ไขรายการ
 function saveEdit() {
   const id = parseInt(document.getElementById('editId').value);
   const idx = window.items.findIndex(i => i.id === id);
@@ -387,6 +417,7 @@ function saveEdit() {
   showToast('บันทึกแล้ว');
 }
 
+// ส่งออกข้อมูลทั้งหมดเป็นไฟล์ CSV
 function downloadCSV() {
   if (!window.items.length) return showToast('ไม่มีข้อมูล');
 
@@ -520,6 +551,7 @@ function importXLSX(event) {
   event.target.value = '';
 }
 
+// วาดลิสต์รายการในหน้าแรก
 function renderList() {
   const items = window.items || [];
   let filtered = items.filter(i => {
@@ -551,6 +583,7 @@ function renderList() {
     </div>`).join('');
 }
 
+// วาดลิสต์ผลลัพธ์ในหน้าค้นหา
 function renderSearchList() {
   const search = document.getElementById('searchInputPage')?.value.toLowerCase().trim() || '';
   const items = window.items || [];
@@ -590,6 +623,7 @@ function renderSearchList() {
   `).join('');
 }
 
+// อัปเดตยอดสรุป (รายรับ/รายจ่าย/คงเหลือ) ด้านบนของแอป
 function update() {
   const items = window.items || [];
   let inc = 0, exp = 0;
@@ -602,6 +636,7 @@ function update() {
   if (balEl) balEl.innerText = (inc - exp).toLocaleString();
 }
 
+// เพิ่มกระเป๋าเงิน/บัญชีใหม่
 function addWallet() {
   const name = document.getElementById('walletNameInput').value.trim();
   const init = parseFloat(document.getElementById('walletInitInput').value) || 0;
@@ -619,16 +654,15 @@ function addWallet() {
   showToast('เพิ่มบัญชีแล้ว');
 }
 
+// แสดงวันที่ปัจจุบันบนหัวแอป
 function displayCurrentDate() {
   const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const year = now.getFullYear();
-  const formattedDate = `${day}/${month}/${year}`;
+  const formattedDate = now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const el = document.getElementById('CurrentDate');
   if (el) el.textContent = ` ${formattedDate}`;
 }
 
+// ลบกระเป๋าเงิน (ต้องเหลืออย่างน้อย 1 ใบ)
 async function deleteWallet(id) {
   if (window.wallets.length <= 1) return showToast('ต้องมีบัญชีอย่างน้อย 1 บัญชี');
 
@@ -651,6 +685,7 @@ async function deleteWallet(id) {
   showToast('ลบบัญชีแล้ว');
 }
 
+// โอนเงินระหว่างกระเป๋าเงินสองใบ
 function doTransfer() {
   const fromId = parseInt(document.getElementById('transferFrom').value);
   const toId = parseInt(document.getElementById('transferTo').value);
@@ -676,6 +711,7 @@ function doTransfer() {
   showToast(`โอน ${amount.toLocaleString()} ฿ สำเร็จ`);
 }
 
+// วาดหน้ากระเป๋าเงิน (ลิสต์บัญชี + ยอดคงเหลือ)
 function renderWalletPage() {
   const wallets = window.wallets || [];
   const grid = document.getElementById('walletSummary');
@@ -705,6 +741,7 @@ function renderWalletPage() {
 
 let loanDisplayMode = 'person';
 
+// สลับแท็บ ยืม/คืน ในหน้ายืมเงิน
 function setLoanTab(mode, el) {
   loanDisplayMode = mode;
   document.querySelectorAll('.loan-tab').forEach(b => b.classList.remove('active'));
@@ -712,6 +749,7 @@ function setLoanTab(mode, el) {
   renderLoan();
 }
 
+// วาดหน้ายืมเงิน (สรุปยอดยืม-คืน)
 function renderLoan() {
   const items = window.items || [];
   const borrows = items.filter(i => i.type === 'income' && i.category === 'ยืม');
@@ -795,6 +833,7 @@ function renderLoan() {
 
 let instTab = 'phone';
 
+// สลับแท็บประเภทในหน้าสินเชื่อ
 function setInstTab(type, el) {
   instTab = type;
   document.querySelectorAll('.inst-tab').forEach(b => b.classList.remove('active'));
@@ -802,6 +841,7 @@ function setInstTab(type, el) {
   renderInstallment();
 }
 
+// เพิ่มรายการผ่อนชำระใหม่
 function addInstallment() {
   const name = document.getElementById('instName').value.trim();
   const total = parseFloat(document.getElementById('instTotal').value);
@@ -821,6 +861,7 @@ function addInstallment() {
   showToast('เพิ่มรายการแล้ว');
 }
 
+// ลบรายการผ่อนชำระ
 async function deleteInstallment(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการผ่อนนี้?')) {
     window.installments = window.installments.filter(i => i.id !== id);
@@ -830,6 +871,7 @@ async function deleteInstallment(id) {
   }
 }
 
+// เปิดป๊อปอัปสำหรับจ่ายค่างวด
 function openInstPayModal(id) {
   const inst = window.installments.find(i => i.id === id);
   if (!inst) return;
@@ -844,8 +886,10 @@ function openInstPayModal(id) {
   document.getElementById('instPayModalBg').classList.add('open');
 }
 
+// ปิดป๊อปอัปจ่ายค่างวด
 function closeInstPayModal() { document.getElementById('instPayModalBg').classList.remove('open'); }
 
+// บันทึกการจ่ายค่างวด
 function saveInstPay() {
   const id = parseInt(document.getElementById('instPayId').value);
   const qty = parseInt(document.getElementById('instPayQty').value);
@@ -886,6 +930,7 @@ function saveInstPay() {
   showToast(`บันทึกจ่าย ${qty} งวดแล้ว`);
 }
 
+// วาดหน้าสินเชื่อ (ลิสต์รายการผ่อนทั้งหมด)
 function renderInstallment() {
   const insts = window.installments || [];
   let phoneRem = 0, paynextRem = 0;
@@ -922,6 +967,7 @@ function renderInstallment() {
 
 let catTab = 'income';
 
+// สลับแท็บรายรับ/รายจ่ายในหน้าหมวดหมู่
 function setCatTab(type, el) {
   catTab = type;
   document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
@@ -929,6 +975,7 @@ function setCatTab(type, el) {
   renderCatList();
 }
 
+// เพิ่มหมวดหมู่ใหม่
 function addCategory() {
   const name = document.getElementById('catNameInput').value.trim();
   if (!name) return showToast('กรุณากรอกชื่อหมวด');
@@ -940,6 +987,7 @@ function addCategory() {
   updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
+// ลบหมวดหมู่
 async function deleteCategory(type, name) {
   if (DEFAULT_DATA.categories[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
   if (!await showConfirmModal(`คุณแน่ใจว่าต้องการลบหมวด "${name}"?`)) return;
@@ -949,6 +997,7 @@ async function deleteCategory(type, name) {
   updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
+// รีเซ็ตหมวดหมู่กลับเป็นค่าเริ่มต้น
 async function resetCategories() {
   if (!await showConfirmModal('รีเซ็ตหมวดหมู่ทั้งหมดกลับเป็นค่าเริ่มต้น? หมวดที่เพิ่มไว้จะหายไป', false)) return;
   window.categories = {
@@ -961,6 +1010,7 @@ async function resetCategories() {
   showToast('รีเซ็ตหมวดแล้ว');
 }
 
+// วาดลิสต์หมวดหมู่ในหน้าหมวดหมู่
 function renderCatList() {
   const el = document.getElementById('catList');
   if (!el) return;
@@ -973,160 +1023,145 @@ function renderCatList() {
     </div>`).join('');
 }
 
-async function addBudget() {
-  const month = document.getElementById('budgetMonthSelect').value;
-  if (!month) return showToast('เลือกเดือนก่อน');
-  const category = document.getElementById('budgetCategorySelect').value;
-  if (!category) return showToast('เลือกหมวดหมู่');
-  const amount = parseFloat(document.getElementById('budgetAmountInput').value);
-  if (isNaN(amount) || amount <= 0) return showToast('กรอกจำนวนเงิน');
+// แปลงวันที่ (yyyy-mm-dd) ให้เป็นรูปแบบ "Fri 24 Jul 2026"
+function formatBillDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
 
-  const exists = window.budgets.find(b => b.month === month && b.category === category);
-  if (exists) {
-    if (await showConfirmModal(`หมวด "${category}" ในเดือนนี้มีงบอยู่แล้ว (${exists.amount} ฿) ต้องการอัปเดตหรือไม่?`, false)) {
-      exists.amount = amount;
-    } else {
-      return;
-    }
-  } else {
-    window.budgets.push({ id: Date.now(), category, month, amount });
-  }
+// เพิ่มรายการที่ต้องจ่ายใหม่ (บิลค้างจ่าย)
+function addBill() {
+  const name = document.getElementById('billName').value.trim();
+  const amount = parseFloat(document.getElementById('billAmount').value);
+  const dueDate = document.getElementById('billDueDate').value;
+  const category = document.getElementById('billCategorySelect').value;
+  const walletId = parseInt(document.getElementById('billWalletSelect').value) || (window.wallets[0]?.id || 1);
+  const repeatMonthly = document.getElementById('billRepeatMonthly').checked;
+
+  if (!name || isNaN(amount) || amount <= 0) return showToast('กรอกข้อมูลให้ครบถ้วน');
+
+  window.bills.push({
+    id: Date.now(),
+    name,
+    amount,
+    dueDate: dueDate || today,
+    status: 'unpaid',
+    repeatMonthly,
+    category: category || 'อื่นๆ',
+    walletId
+  });
   saveLocalStorage();
-  document.getElementById('budgetAmountInput').value = '';
-  renderBudgetPage();
-  showToast('บันทึกงบประมาณแล้ว');
+
+  document.getElementById('billName').value = '';
+  document.getElementById('billAmount').value = '';
+  document.getElementById('billDueDate').value = '';
+  document.getElementById('billRepeatMonthly').checked = false;
+
+  renderBillsPage();
+  showToast('เพิ่มรายการแล้ว');
 }
 
-async function deleteBudget(id) {
-  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบงบประมาณนี้?')) {
-    window.budgets = window.budgets.filter(b => b.id !== id);
+// ลบรายการที่ต้องจ่าย (ต้องกดยืนยันก่อน)
+async function deleteBill(id) {
+  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
+    window.bills = window.bills.filter(b => b.id !== id);
     saveLocalStorage();
-    renderBudgetPage();
-    showToast('ลบงบประมาณแล้ว');
-  }
-}
-
-function addUpcomingFromBudget() {
-  const month = document.getElementById('budgetMonthSelect').value;
-  const name = document.getElementById('upcomingName').value.trim();
-  const amount = parseFloat(document.getElementById('upcomingAmount').value);
-  const category = document.getElementById('upcomingCategorySelect').value;
-  if (!month || !name || isNaN(amount) || amount <= 0) return showToast('กรอกข้อมูลให้ครบถ้วน');
-  window.upcoming.push({ id: Date.now(), month, name, amount, category: category || 'อื่นๆ' });
-  saveLocalStorage();
-  document.getElementById('upcomingName').value = '';
-  document.getElementById('upcomingAmount').value = '';
-  renderBudgetPage();
-  showToast('เพิ่มรายการคาดการณ์แล้ว');
-}
-
-async function deleteUpcoming(id) {
-  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการคาดการณ์นี้?')) {
-    window.upcoming = window.upcoming.filter(u => u.id !== id);
-    saveLocalStorage();
-    renderBudgetPage();
+    renderBillsPage();
     showToast('ลบแล้ว');
   }
 }
 
-function renderBudgetPage() {
-  const monthSelect = document.getElementById('budgetMonthSelect');
-  if (!monthSelect) return;
+// กดปุ่ม "จ่ายแล้ว": สร้างรายการรายจ่ายจริง + ถ้าเป็นบิลรายเดือนให้เลื่อนวันครบกำหนดไปเดือนหน้า
+async function markBillPaid(id) {
+  const bill = window.bills.find(b => b.id === id);
+  if (!bill) return;
+  if (!await showConfirmModal(`ยืนยันว่าจ่าย "${bill.name}" (${bill.amount.toLocaleString()} ฿) แล้ว?`, false)) return;
 
-  const months = [...new Set(window.items.map(i => i.date.slice(0, 7)))].sort().reverse();
-  const thisMonth = today.slice(0, 7);
-  if (!months.includes(thisMonth)) months.unshift(thisMonth);
-
-  const previousSelection = monthSelect.value || thisMonth;
-  monthSelect.innerHTML = months.map(m => {
-    const [y, mo] = m.split('-');
-    return `<option value="${m}" ${m === previousSelection ? 'selected' : ''}>${new Date(y, mo - 1).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</option>`;
-  }).join('');
-  const selectedMonth = monthSelect.value;
-
-  const catSelect = document.getElementById('budgetCategorySelect');
-  if (catSelect) {
-    catSelect.innerHTML = '<option value="">-- เลือกหมวดรายจ่าย --</option>' +
-      (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-  }
-  const upcomingCatSel = document.getElementById('upcomingCategorySelect');
-  if (upcomingCatSel) {
-    upcomingCatSel.innerHTML = '<option value="">-- หมวดหมู่ --</option>' +
-      (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-  }
-
-  const budgets = window.budgets.filter(b => b.month === selectedMonth);
-  const expenses = window.items.filter(i => i.type === 'expense' && i.date.startsWith(selectedMonth));
-  const expenseByCat = {};
-  expenses.forEach(i => {
-    const cat = i.category || 'อื่นๆ';
-    expenseByCat[cat] = (expenseByCat[cat] || 0) + i.amount;
+  // บันทึกเป็นรายจ่ายจริงในหน้าแรก
+  window.items.push({
+    id: Date.now(),
+    name: bill.name,
+    amount: bill.amount,
+    type: 'expense',
+    date: today,
+    note: '',
+    category: bill.category,
+    walletId: bill.walletId
   });
 
-  let totalBudget = 0, totalSpent = 0;
-  budgets.forEach(b => { totalBudget += b.amount; });
-  Object.values(expenseByCat).forEach(v => totalSpent += v);
-
-  document.getElementById('budgetTotalAmount').innerText = totalBudget.toLocaleString();
-  document.getElementById('budgetTotalSpent').innerText = totalSpent.toLocaleString();
-
-  const listDiv = document.getElementById('budgetList');
-  const listHeader = document.getElementById('budgetListHeader');
-  if (listDiv && listHeader) {
-    if (budgets.length === 0) {
-      listHeader.innerText = 'ยังไม่มีงบประมาณ';
-      listDiv.innerHTML = '<div class="empty">— ตั้งงบประมาณสำหรับเดือนนี้ —</div>';
-    } else {
-      listHeader.innerText = `งบประมาณ (${budgets.length} หมวด)`;
-      listDiv.innerHTML = budgets.map(b => {
-        const actual = expenseByCat[b.category] || 0;
-        const remaining = b.amount - actual;
-        const pct = Math.min((actual / b.amount) * 100, 100).toFixed(0);
-        const over = remaining < 0;
-        const statusColor = over ? 'var(--red)' : 'var(--green)';
-        const statusText = over ? 'เกินงบ' : 'เหลือ';
-        return `
-          <div class="item expense" style="flex-direction:column;align-items:stretch;border-left-color:${over ? 'var(--red)' : 'var(--green)'}">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
-              <span class="name">${escapeHtml(b.category)}</span>
-              <button class="btn-del" onclick="deleteBudget(${b.id})" style="font-size:0.8rem">✕</button>
-            </div>
-            <div class="bar-row" style="margin-bottom:0.2rem">
-              <div class="bar-label" style="width:auto;flex:1">ใช้ไป ${actual.toLocaleString()} / งบ ${b.amount.toLocaleString()}</div>
-              <div class="bar-val" style="color:${statusColor};font-weight:bold">${statusText} ${Math.abs(remaining).toLocaleString()} ฿</div>
-            </div>
-            <div class="bar-track" style="height:8px">
-              <div class="bar-fill expense" style="width:${pct}%;background:${over ? 'linear-gradient(90deg, #ff4f64, #ff8fa0)' : 'linear-gradient(90deg, #39d98a, #8ff0c0)'}"></div>
-            </div>
-          </div>`;
-      }).join('');
-    }
+  if (bill.repeatMonthly) {
+    // บิลรายเดือน: เลื่อนวันครบกำหนด +1 เดือน แล้วเปิดให้จ่ายรอบใหม่ (ไม่ลบทิ้ง)
+    const nextDue = new Date(bill.dueDate + 'T00:00:00');
+    nextDue.setMonth(nextDue.getMonth() + 1);
+    bill.dueDate = nextDue.toISOString().split('T')[0];
+    bill.status = 'unpaid';
+    bill.id = Date.now() + 1;
+  } else {
+    // บิลครั้งเดียว: แค่ทำเครื่องหมายว่าจ่ายแล้ว
+    bill.status = 'paid';
   }
 
-  const upcomingForMonth = window.upcoming.filter(u => u.month === selectedMonth);
-  const upcomingListDiv = document.getElementById('upcomingBudgetList');
-  if (upcomingListDiv) {
-    if (upcomingForMonth.length === 0) {
-      upcomingListDiv.innerHTML = '<div class="empty">— ยังไม่มีรายการคาดการณ์ —</div>';
-    } else {
-      upcomingListDiv.innerHTML = upcomingForMonth.map(u => `
-        <div class="item expense">
-          <div class="item-left" style="flex:1">
-            <div class="name">${escapeHtml(u.name)}</div>
-            <div class="meta">${escapeHtml(u.month)} · ${escapeHtml(u.category || 'อื่นๆ')}</div>
-          </div>
-          <div class="item-right">
-            <div class="amount">-${u.amount.toLocaleString()}</div>
-            <button class="btn-del" onclick="deleteUpcoming(${u.id})">✕</button>
-          </div>
-        </div>`).join('');
-    }
+  saveLocalStorage();
+  renderBillsPage();
+  update();
+  renderWalletPage();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
+  showToast('บันทึกการจ่ายแล้ว');
+}
+
+// วาดหน้าลิสต์ทูเพย์: เติม dropdown หมวดหมู่/บัญชี แล้วแสดงลิสต์เรียงจากที่บันทึกล่าสุด
+function renderBillsPage() {
+  const catSelect = document.getElementById('billCategorySelect');
+  if (catSelect) {
+    catSelect.innerHTML = '<option value="">-- หมวดหมู่ --</option>' +
+      (window.categories.expense || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
+  const walletSelect = document.getElementById('billWalletSelect');
+  if (walletSelect) {
+    walletSelect.innerHTML = (window.wallets || []).map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+  }
+
+  const listDiv = document.getElementById('billList');
+  const listHeader = document.getElementById('billListHeader');
+  if (!listDiv || !listHeader) return;
+
+  // เรียงตามลำดับบันทึกล่าสุดก่อน (id มาก = เพิ่งบันทึก)
+  const sorted = [...window.bills].sort((a, b) => b.id - a.id);
+
+  if (sorted.length === 0) {
+    listHeader.innerText = 'ยังไม่มีรายการที่ต้องจ่าย';
+    listDiv.innerHTML = '<div class="empty">— เพิ่มรายการที่ต้องจ่ายด้านบน —</div>';
+    return;
+  }
+
+  listHeader.innerText = `รายการที่ต้องจ่าย (${sorted.length})`;
+  listDiv.innerHTML = sorted.map(b => {
+    const isPaid = b.status === 'paid';
+    const isOverdue = !isPaid && b.dueDate < today; // เลยวันครบกำหนดแล้วและยังไม่จ่าย
+    const dateColor = isPaid ? 'var(--muted)' : (isOverdue ? 'var(--red)' : 'var(--text)');
+    return `
+      <div class="item expense" style="opacity:${isPaid ? 0.6 : 1}">
+        <div class="item-left" style="flex:1">
+          <div class="name">${escapeHtml(b.name)}</div>
+          <div class="meta" style="color:${dateColor}">${formatBillDate(b.dueDate)} · ${escapeHtml(b.category)}${isPaid ? ' · จ่ายแล้ว' : (isOverdue ? ' · เลยกำหนด' : '')}</div>
+        </div>
+        <div class="item-right">
+          <div class="amount">-${b.amount.toLocaleString()}</div>
+          <div style="display:flex;gap:0.3rem;">
+            ${isPaid ? '' : `<button class="btn-neon" style="padding:4px 8px;font-size:0.75rem;" onclick="markBillPaid(${b.id})">จ่ายแล้ว</button>`}
+            <button class="btn-del" onclick="deleteBill(${b.id})">✕</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 let chartBarType = 'expense';
 let chartDonutType = 'expense';
 
+// วาดหน้าแดชบอร์ด (กราฟ + สรุปทั้งหมด)
 function render() {
   const month = document.getElementById('sumMonthSelect').value || today.slice(0, 7);
   const items = window.items || [];
@@ -1160,6 +1195,7 @@ function render() {
   }
 }
 
+// วาดกราฟแท่งแยกตามหมวดหมู่
 function renderBar(elId, monthItems, type) {
   const filtered = monthItems.filter(i => i.type === type);
   const catMap = new Map();
@@ -1172,6 +1208,7 @@ function renderBar(elId, monthItems, type) {
   el.innerHTML = sorted.map(([cat, amt]) => `<div class="bar-row"><div class="bar-label">${escapeHtml(cat)}</div><div class="bar-track"><div class="bar-fill ${type}" style="width:${total ? (amt / total * 100).toFixed(1) : 0}%"></div></div><div class="bar-val">${amt.toLocaleString()}</div></div>`).join('');
 }
 
+// เติมตัวเลือกเดือนใน dropdown ของหน้าแดชบอร์ด
 function initMonthSelect() {
   const items = window.items || [];
   const months = [...new Set(items.map(i => i.date.slice(0, 7)))].sort().reverse();
@@ -1187,6 +1224,7 @@ function initMonthSelect() {
 const COLORS_EXP = ['#ff4f64', '#ff8c5a', '#ffb347', '#ffd700', '#c8a84b', '#e07b9a', '#ff6b8a', '#ffaa44', '#e6861a', '#d4604a'];
 const COLORS_INC = ['#39d98a', '#4f9bff', '#a78bfa', '#34d399', '#60a5fa', '#818cf8', '#2dd4bf', '#38bdf8', '#c084fc', '#86efac'];
 
+// รวมยอดเงินแยกตามหมวดหมู่ สำหรับทำกราฟ
 function getCatData(monthItems, type) {
   const filtered = monthItems.filter(i => i.type === type);
   const catMap = new Map();
@@ -1194,6 +1232,7 @@ function getCatData(monthItems, type) {
   return [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+// สลับแท็บกราฟแท่ง (รายรับ/รายจ่าย)
 function setChartTab(type, el) {
   chartBarType = type;
   document.querySelectorAll('#page-summary .chart-wrap:first-of-type .chart-tab').forEach(b => b.classList.remove('active'));
@@ -1204,6 +1243,7 @@ function setChartTab(type, el) {
   drawBar(monthItems, type);
 }
 
+// สลับแท็บกราฟโดนัท (รายรับ/รายจ่าย)
 function setDonutTab(type, el) {
   chartDonutType = type;
   const wraps = document.querySelectorAll('#page-summary .chart-wrap');
@@ -1215,6 +1255,7 @@ function setDonutTab(type, el) {
   drawDonut(monthItems, type);
 }
 
+// วาดกราฟแท่งลงบน canvas
 function drawBar(monthItems, type) {
   const canvas = document.getElementById('barCanvas');
   if (!canvas) return;
@@ -1269,6 +1310,7 @@ function drawBar(monthItems, type) {
   });
 }
 
+// วาดกราฟโดนัทลงบน canvas
 function drawDonut(monthItems, type) {
   const canvas = document.getElementById('donutCanvas');
   if (!canvas) return;
@@ -1340,6 +1382,7 @@ function drawDonut(monthItems, type) {
   }
 }
 
+// เปิด/ปิดเมนู sidebar
 function toggleMenu() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -1359,6 +1402,7 @@ function toggleMenu() {
   }
 }
 
+// ปิดเมนู sidebar
 function closeMenu() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -1369,6 +1413,7 @@ function closeMenu() {
   btn.setAttribute('aria-expanded', 'false');
 }
 
+// สลับการแสดงผลไปยังหน้าที่เลือก (หัวใจของระบบนำทาง)
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1402,7 +1447,7 @@ function showPage(id, el) {
       renderWalletPage();
       break;
     case 'page-budget':
-      renderBudgetPage();
+      renderBillsPage();
       break;
     case 'page-search':
       const inp = document.getElementById('searchInputPage');
@@ -1419,6 +1464,7 @@ function showPage(id, el) {
   closeMenu();
 }
 
+// จุดเริ่มต้นของแอป: โหลดข้อมูลแล้ววาดหน้าจอครั้งแรก
 function initApp() {
   loadLocalStorage();
 
