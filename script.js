@@ -98,6 +98,14 @@ function loadDefault() {
   saveLocalStorage();
 }
 
+// อัปเดตสถิติที่แสดงในหน้าตั้งค่า
+function renderSettingsPage() {
+  const itemCountEl = document.getElementById('settingsItemCount');
+  const walletCountEl = document.getElementById('settingsWalletCount');
+  if (itemCountEl) itemCountEl.textContent = (window.items || []).length;
+  if (walletCountEl) walletCountEl.textContent = (window.wallets || []).length;
+}
+
 // รวมข้อมูลทั้งหมดเป็น JSON สำหรับส่งออก/แชร์
 function exportForChat() {
   const payload = {
@@ -1274,7 +1282,7 @@ function drawBar(monthItems, type) {
   ctx.clearRect(0, 0, W, H);
   if (!data.length) {
     ctx.fillStyle = '#4a5568';
-    ctx.font = '13px monospace';
+    ctx.font = '13px Pattaya';
     ctx.textAlign = 'center';
     ctx.fillText('— ไม่มีข้อมูล —', W / 2, H / 2);
     return;
@@ -1298,13 +1306,13 @@ function drawBar(monthItems, type) {
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#cdd4e0';
-    ctx.font = `11px 'Sarabun', sans-serif`;
+    ctx.font = `11px Pattaya`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const label = cat.length > 7 ? cat.slice(0, 7) + '…' : cat;
     ctx.fillText(label, padL - 4, y + barH / 2);
     ctx.fillStyle = color;
-    ctx.font = `10px monospace`;
+    ctx.font = `10px Pattaya`;
     ctx.textAlign = 'left';
     ctx.fillText(amt.toLocaleString(), padL + barW + 4, y + barH / 2);
   });
@@ -1330,7 +1338,7 @@ function drawDonut(monthItems, type) {
   const legend = document.getElementById('donutLegend');
   if (!data.length) {
     ctx.fillStyle = '#4a5568';
-    ctx.font = '13px monospace';
+    ctx.font = '13px Pattaya';
     ctx.textAlign = 'center';
     ctx.fillText('— ไม่มีข้อมูล —', W / 2, H / 2);
     if (legend) legend.innerHTML = '';
@@ -1366,12 +1374,12 @@ function drawDonut(monthItems, type) {
   ctx.fillStyle = '#0f1320';
   ctx.fill();
   ctx.fillStyle = '#c8a84b';
-  ctx.font = `bold 13px monospace`;
+  ctx.font = `bold 13px Pattaya`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(total.toLocaleString(), cx, cy - 7);
   ctx.fillStyle = '#4a5568';
-  ctx.font = `10px monospace`;
+  ctx.font = `10px Pattaya`;
   ctx.fillText('บาท', cx, cy + 9);
 
   if (legend) {
@@ -1457,6 +1465,9 @@ function showPage(id, el) {
       break;
     case 'page-home':
       renderWalletFilterBar('walletFilterBar', 'walletFilter');
+      break;
+    case 'page-settings':
+      renderSettingsPage();
       break;
   }
 

@@ -37,8 +37,8 @@
       <span id="CurrentDate" style="font-size:0.65rem;color:var(--muted);"></span>
     </div>
   </div>
-  <button id="exportChatBtn" onclick="exportChat()" aria-label="ส่งออกข้อมูล" title="ส่งออกข้อมูล" style="background:rgba(200,168,75,.1);border:1px solid var(--gold-dim);color:var(--gold);font-size:10.5px;padding:6px 10px;border-radius:8px;letter-spacing:.02em;">
-    ⬇️
+  <button id="settingsBtn" onclick="showPage('page-settings', this)" aria-label="ตั้งค่า" title="ตั้งค่า" style="background:rgba(200,168,75,.1);border:1px solid var(--gold-dim);color:var(--gold);font-size:10.5px;padding:6px 10px;border-radius:8px;letter-spacing:.02em;">
+    ⚙️
   </button>
 </div>
 
@@ -75,13 +75,15 @@
     <button class="sidebar-btn" onclick="showPage('page-search',this)">
       <span class="nav-icon">🔍</span> ค้นหา
     </button>
+    <button class="sidebar-btn" onclick="showPage('page-settings',this)">
+      <span class="nav-icon">⚙️</span> ตั้งค่า
+    </button>
   </nav>
 </div>
 
 <div class="nav-grid">
   <button class="nav-btn active" onclick="showPage('page-home',this)">
-    <span class="nav-icon">🏠</span>หน้าหลัก
-  </button>
+   <span class="nav-icon">🏠</span>หน้าหลัก</button>
   <button class="nav-btn" onclick="showPage('page-wallet',this)">
     <span class="nav-icon">💳</span>กระเป๋าเงิน
   </button>
@@ -403,6 +405,39 @@
   <div class="wallet-bar" id="walletFilterBarSearch"></div>
   <div class="list-header" id="searchListHeader">ผลลัพธ์</div>
   <div id="searchList"></div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="page-title">ตั้งค่า</div>
+  <div class="page-sub">ข้อมูลแอปและการจัดการข้อมูล</div>
+
+  <div class="s-card" style="margin-bottom:10px;">
+    <div class="sc-label">Budget//Ctrl</div>
+    <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">แอปบันทึกรายรับ-รายจ่ายส่วนตัว</div>
+    <div style="display:flex;gap:16px;margin-top:10px;">
+      <div>
+        <div style="font-size:0.6rem;color:var(--muted);">รายการทั้งหมด</div>
+        <div id="settingsItemCount" style="font-size:1rem;font-weight:700;color:var(--gold);">0</div>
+      </div>
+      <div>
+        <div style="font-size:0.6rem;color:var(--muted);">กระเป๋าเงิน</div>
+        <div id="settingsWalletCount" style="font-size:1rem;font-weight:700;color:var(--gold);">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">จัดการข้อมูล</div>
+  <div class="toolbar" style="margin-bottom:16px;">
+    <button class="btn-tool" onclick="exportForChat()">
+      ⬇️ คัดลอกข้อมูลสำรอง
+    </button>
+    <button class="btn-tool" onclick="document.getElementById('fileInput').click()">
+      📥 นำเข้าจาก Excel
+    </button>
+    <button class="btn-tool" onclick="clearAll()">
+      🗑️ ล้างรายการทั้งหมด
+    </button>
+  </div>
 </div>
 
 <div class="modal-bg" id="modalBg">
