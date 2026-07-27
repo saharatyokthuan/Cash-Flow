@@ -1288,7 +1288,8 @@ body {
 .transfer-form input, .transfer-form select,
 .cat-add-row input,
 .month-sel-wrap select,
-.search-wrap input {
+.search-wrap input,
+.cp-form input:not([type="checkbox"]), .cp-form select {
   background: var(--bg);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
@@ -1303,7 +1304,8 @@ body {
 .note-toggle input,
 .transfer-form input, .transfer-form select,
 .month-sel-wrap select,
-.search-wrap input {
+.search-wrap input,
+.cp-form input:not([type="checkbox"]), .cp-form select {
   width: 100%;
 }
 
@@ -1313,8 +1315,17 @@ body {
 .transfer-form input:focus, .transfer-form select:focus,
 .cat-add-row input:focus,
 .month-sel-wrap select:focus,
-.search-wrap input:focus {
+.search-wrap input:focus,
+.cp-form input:not([type="checkbox"]):focus, .cp-form select:focus {
   outline: none;
   border-color: var(--gold-dim);
   box-shadow: 0 0 0 3px rgba(239, 207, 7, 0.1);
+}
+
+/* Bare fields stacked directly in .cp-form (wallet / bill / installment forms)
+   need their own spacing since they aren't wrapped in .form-group rows */
+.cp-form > input:not([type="checkbox"]),
+.cp-form > select {
+  margin-bottom: 8px;
+  display: block;
 }
