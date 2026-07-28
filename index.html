@@ -22,6 +22,7 @@
 </head>
 <body>
 
+<!-- ส่วนหัว — โลโก้แอป, วันที่ปัจจุบัน, ปุ่มเมนู, ปุ่มตั้งค่า -->
 <div class="app-header">
   <div style="display:flex;align-items:center;gap:0.6rem;">
     <button class="hamburger-btn" onclick="toggleMenu()" aria-label="เมนู" aria-expanded="false">
@@ -43,6 +44,7 @@
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMenu()"></div>
+<!-- เมนู sidebar — เปิดจากปุ่มแฮมเบอร์เกอร์ ใช้สลับไปแต่ละหน้า -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span style="font-size:1rem;font-weight:700;color:var(--gold);">เมนู</span>
@@ -81,6 +83,7 @@
   </nav>
 </div>
 
+<!-- แถบเมนูล่าง — สลับหน้าหลักที่ใช้บ่อย -->
 <div class="nav-grid">
   <button class="nav-btn active" onclick="showPage('page-home',this)">
    <span class="nav-icon">🏠</span>หน้าหลัก</button>
@@ -141,7 +144,7 @@
     <div class="form-row">
       <div class="form-group mode-group">
         <label>โหมด</label>
-        <div class="mode-toggle">
+        <div class="mode-toggle" id="homeModeToggle">
           <button type="button" class="mode-btn income active" data-mode="income" onclick="setMode('income', this)">รายรับ</button>
           <button type="button" class="mode-btn expense" data-mode="expense" onclick="setMode('expense', this)">รายจ่าย</button>
         </div>
@@ -363,11 +366,15 @@
   </div>
 </div>
 
-<!-- หน้าลิสต์ทูเพย์ — รายการที่ต้องจ่าย (บิลค้างจ่าย) -->
+<!-- หน้าลิสต์ทูเพย์ — รายการรายรับ/รายจ่ายที่ยังไม่เกิดขึ้นจริง (รอทำรายการ) -->
 <div class="page" id="page-budget">
   <div class="page-title">ลิสต์ทูเพย์</div>
-  <div class="page-sub">รายการที่ต้องจ่าย — เรียงตามที่บันทึกล่าสุด</div>
+  <div class="page-sub">รายการที่ต้องทำ (รับ/จ่าย) — เรียงตามที่บันทึกล่าสุด</div>
   <div class="cp-form">
+    <div class="mode-toggle" id="billModeToggle" style="margin-bottom:8px;">
+      <button type="button" class="mode-btn income" data-mode="income" onclick="setBillMode('income', this)">รายรับ</button>
+      <button type="button" class="mode-btn expense active" data-mode="expense" onclick="setBillMode('expense', this)">รายจ่าย</button>
+    </div>
     <label for="billName" class="sr-only">รายการ</label>
     <input type="text" id="billName" placeholder="รายการ เช่น ค่าเน็ต">
     <label for="billAmount" class="sr-only">จำนวนเงิน</label>
@@ -385,7 +392,7 @@
     </label>
     <button class="btn-neon" onclick="addBill()">เพิ่มรายการ</button>
   </div>
-  <div class="list-header" id="billListHeader">รายการที่ต้องจ่าย</div>
+  <div class="list-header" id="billListHeader">รายการที่ต้องทำ</div>
   <div id="billList"></div>
 </div>
 
@@ -407,6 +414,7 @@
   <div id="searchList"></div>
 </div>
 
+<!-- หน้าตั้งค่า — ข้อมูลแอป + สำรอง/นำเข้า/ล้างข้อมูล -->
 <div class="page" id="page-settings">
   <div class="page-title">ตั้งค่า</div>
   <div class="page-sub">ข้อมูลแอปและการจัดการข้อมูล</div>
@@ -440,6 +448,7 @@
   </div>
 </div>
 
+<!-- ป๊อปอัปแก้ไขรายการ (ใช้ร่วมกันหน้าแรก/ค้นหา) -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>แก้ไขรายการ</h2>
@@ -458,6 +467,7 @@
   </div>
 </div>
 
+<!-- ป๊อปอัปจ่ายค่างวด (หน้าผ่อนชำระ) -->
 <div class="modal-bg" id="instPayModalBg">
   <div class="modal">
     <h2 id="instPayTitle">จ่ายงวด</h2>
@@ -473,6 +483,7 @@
   </div>
 </div>
 
+<!-- ป๊อปอัปยืนยัน (ใช้ก่อนลบ/ทำรายการสำคัญทุกจุด) -->
 <div class="modal-bg" id="confirmModalBg">
   <div class="modal" style="max-width:340px;">
     <h2 id="confirmTitle" style="color:var(--red);">ยืนยันการดำเนินการ</h2>
@@ -484,6 +495,7 @@
   </div>
 </div>
 
+<!-- ข้อความแจ้งเตือนเล็กๆ มุมจอ -->
 <div class="toast" id="toast"></div>
 
 <script src="script.js" defer></script>
