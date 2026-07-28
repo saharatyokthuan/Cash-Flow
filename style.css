@@ -41,7 +41,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Header */
+/* ส่วนหัว (โลโก้, วันที่, ปุ่มตั้งค่า) */
 .app-header {
   position: fixed;
   top: 0;
@@ -59,7 +59,7 @@ body {
   margin: 0 auto;
 }
 
-/* Hamburger */
+/* ปุ่มเมนูแฮมเบอร์เกอร์ */
 .hamburger-btn {
   background: transparent;
   border: none;
@@ -99,7 +99,7 @@ body {
   margin-left: -4px;
 }
 
-/* Sidebar */
+/* เมนู sidebar */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -188,7 +188,7 @@ body {
   color: var(--gold);
 }
 
-/* Nav Grid */
+/* แถบเมนูล่าง */
 .nav-grid {
   position: fixed;
   bottom: 0;
@@ -226,7 +226,7 @@ body {
   color: var(--gold);
 }
 
-/* Summary Grid */
+/* การ์ดสรุปยอด (รายรับ/รายจ่าย/คงเหลือ) หน้าแรก */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -257,7 +257,7 @@ body {
 .s-card.expense .sc-amount { color: var(--red); }
 .s-card.balance .sc-amount { color: var(--gold); }
 
-/* Page */
+/* โครงหน้าทั่วไป (page container) */
 .page {
   display: none;
   padding: 4px 12px 80px 12px;
@@ -279,7 +279,7 @@ body {
   margin-bottom: 10px;
 }
 
-/* Form */
+/* ฟอร์มเพิ่มรายการ (หน้าแรก + ฟอร์มบาง cp-form ทั่วไป) */
 .cp-form {
   background: var(--bg-card);
   border-radius: 12px;
@@ -398,7 +398,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Toolbar */
+/* แถบเครื่องมือ (นำเข้า/ล้างข้อมูล) */
 .toolbar {
   display: flex;
   gap: 6px;
@@ -423,7 +423,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Filter */
+/* ปุ่มกรองประเภทรายการ */
 .filter {
   display: flex;
   gap: 6px;
@@ -447,7 +447,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Wallet Bar */
+/* แถบกรองกระเป๋าเงิน */
 .wallet-bar {
   display: flex;
   gap: 6px;
@@ -472,7 +472,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* List */
+/* ลิสต์รายการ (การ์ดแต่ละแถว) */
 .list-header {
   font-size: 0.7rem;
   color: var(--muted);
@@ -547,7 +547,7 @@ body {
   font-size: 0.8rem;
 }
 
-/* Modal */
+/* ป๊อปอัปทั่วไป (แก้ไข/ยืนยัน) */
 .modal-bg {
   position: fixed;
   inset: 0;
@@ -636,7 +636,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Toast */
+/* ข้อความแจ้งเตือนมุมจอ */
 .toast {
   position: fixed;
   bottom: 80px;
@@ -659,7 +659,7 @@ body {
   pointer-events: auto;
 }
 
-/* Wallet Page */
+/* หน้ากระเป๋าเงิน/บัญชี */
 .wsc-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -734,7 +734,7 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Loan Page */
+/* หน้ายืมเงิน */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -836,7 +836,7 @@ body {
   border-bottom: 1px solid rgba(200, 168, 75, 0.08);
 }
 
-/* Installment */
+/* หน้าผ่อนชำระ */
 .inst-item {
   background: var(--bg-card);
   border-radius: 10px;
@@ -920,7 +920,7 @@ body {
 }
 .pr-amount { color: var(--gold); }
 
-/* Category */
+/* หน้าหมวดหมู่ */
 .cat-add-row {
   display: flex;
   gap: 6px;
@@ -989,7 +989,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Summary Page */
+/* หน้าสรุป/แดชบอร์ด (กราฟ) */
 .month-sel-wrap {
   margin-bottom: 10px;
 }
@@ -1113,7 +1113,7 @@ body {
 }
 .top-item .ti-amount { color: var(--red); font-weight: 600; font-size: 0.85rem; }
 
-/* Search */
+/* หน้าค้นหา */
 .search-wrap {
   margin-bottom: 10px;
 }
@@ -1133,7 +1133,7 @@ body {
   font-family: var(--font-text);
 }
 
-/* Scrollbar */
+/* แถบเลื่อน (scrollbar) */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
