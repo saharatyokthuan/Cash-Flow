@@ -1,26 +1,31 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Pattaya&display=swap');
 
+/* ============================================================
+   ROOT VARIABLES — LIGHT THEME
+   ============================================================ */
 :root {
-  --bg: #090b10;
-  --bg-card: #12161f;
-  --bg-card-2: #171c28;
-  --text: #eef2f6;
-  --muted: #64768a;
-  --gold: #efcf07;
-  --gold-light: #ffe873;
-  --gold-dim: #c8a84b;
-  --red: #ff4f64;
-  --green: #39d98a;
-  --blue: #4f9bff;
-  --amber: #ffb347;
-  --border-gold: rgba(200, 168, 75, 0.16);
-  --border-soft: rgba(255, 255, 255, 0.07);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 28px -18px rgba(0, 0, 0, 0.75);
-  --shadow-btn: 0 6px 16px -6px rgba(200, 168, 75, 0.45);
+  --bg: #f0f4fa;
+  --bg-card: #ffffff;
+  --bg-card-2: #f8fafc;
+  --text: #1a1a2e;
+  --muted: #6b7a8a;
+  --gold: #c8a84b;
+  --gold-light: #e6d07a;
+  --gold-dim: #b8963a;
+  --red: #e54b5e;
+  --green: #2daa7a;
+  --blue: #4f8bff;
+  --amber: #e6973a;
+  --border-gold: rgba(200, 168, 75, 0.25);
+  --border-soft: rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-btn: 0 4px 12px -4px rgba(200, 168, 75, 0.35);
   --font-text: 'Pattaya', 'Sarabun', sans-serif;
 }
 
+/* ============================================================
+   RESET
+   ============================================================ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -29,9 +34,7 @@
 
 body {
   font-family: var(--font-text);
-  background:
-    radial-gradient(560px 180px at 50% 0%, rgba(239, 207, 7, 0.055), transparent 70%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   padding: 56px 0 80px 0;
   max-width: 480px;
@@ -41,14 +44,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ส่วนหัว (โลโก้, วันที่, ปุ่มตั้งค่า) */
+/* ============================================================
+   HEADER
+   ============================================================ */
 .app-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: var(--bg);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-gold);
   padding: 8px 12px;
   display: flex;
@@ -57,9 +62,55 @@ body {
   height: 52px;
   max-width: 480px;
   margin: 0 auto;
+  box-shadow: 0 1px 0 rgba(200, 168, 75, 0.08), 0 6px 16px -12px rgba(0, 0, 0, 0.12);
 }
 
-/* ปุ่มเมนูแฮมเบอร์เกอร์ */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  margin-left: 0.3rem;
+}
+
+.app-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  cursor: pointer;
+}
+
+.app-subtitle {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  line-height: 0;
+  filter: drop-shadow(0 0 6px rgba(200, 168, 75, 0.25));
+}
+
+.btn-settings {
+  background: rgba(200, 168, 75, 0.1);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-size: 10.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+/* ============================================================
+   HAMBURGER BUTTON
+   ============================================================ */
 .hamburger-btn {
   background: transparent;
   border: none;
@@ -73,6 +124,7 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .hamburger-line {
   display: block;
   width: 22px;
@@ -81,6 +133,7 @@ body {
   border-radius: 2px;
   transition: 0.2s;
 }
+
 .hamburger-btn.active .hamburger-line:nth-child(1) {
   transform: rotate(45deg) translate(4px, 4px);
 }
@@ -91,19 +144,13 @@ body {
   transform: rotate(-45deg) translate(4px, -4px);
 }
 
-.brand-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  line-height: 0;
-  margin-left: -4px;
-}
-
-/* เมนู sidebar */
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.25);
   z-index: 199;
   opacity: 0;
   pointer-events: none;
@@ -128,11 +175,12 @@ body {
   padding: 16px 0;
   display: flex;
   flex-direction: column;
-  font-family: var(--font-text);
+  box-shadow: 20px 0 40px -20px rgba(0, 0, 0, 0.15);
 }
 .sidebar.open {
   transform: translateX(0);
 }
+
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -140,13 +188,22 @@ body {
   padding: 0 16px 16px 16px;
   border-bottom: 1px solid var(--border-gold);
 }
+
+.sidebar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
 .sidebar-close {
   background: transparent;
   border: none;
   color: var(--muted);
   cursor: pointer;
   padding: 4px;
+  font-size: 1.1rem;
 }
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -155,6 +212,7 @@ body {
   flex: 1;
   overflow-y: auto;
 }
+
 .sidebar-btn {
   display: flex;
   align-items: center;
@@ -170,25 +228,28 @@ body {
   cursor: pointer;
   transition: 0.15s;
   width: 100%;
-  text-align: left;
+  text-align: right;
 }
+
 .sidebar-btn .nav-icon {
   flex-shrink: 0;
   width: 24px;
   text-align: center;
 }
+
 .sidebar-btn:hover {
-  background: var(--border-gold);
-}
-.sidebar-btn.active {
-  background: rgba(239, 207, 7, 0.08);
-  color: var(--gold);
-}
-.sidebar-btn.active .nav-icon {
-  color: var(--gold);
+  background: rgba(200, 168, 75, 0.08);
 }
 
-/* แถบเมนูล่าง */
+.sidebar-btn.active {
+  background: rgba(200, 168, 75, 0.12);
+  color: var(--gold);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
 .nav-grid {
   position: fixed;
   bottom: 0;
@@ -202,7 +263,9 @@ body {
   grid-template-columns: repeat(8, 1fr);
   padding: 4px 0 env(safe-area-inset-bottom, 4px);
   z-index: 50;
+  box-shadow: 0 -6px 16px -12px rgba(0, 0, 0, 0.12);
 }
+
 .nav-btn {
   background: transparent;
   border: none;
@@ -216,17 +279,35 @@ body {
   font-size: 0.5rem;
   cursor: pointer;
   transition: 0.15s;
+  position: relative;
 }
+
 .nav-btn .nav-icon {
   font-size: 1.1rem;
   font-family: var(--font-text);
   line-height: 1;
 }
+
 .nav-btn.active {
   color: var(--gold);
+  text-shadow: 0 0 10px rgba(200, 168, 75, 0.2);
 }
 
-/* การ์ดสรุปยอด (รายรับ/รายจ่าย/คงเหลือ) หน้าแรก */
+.nav-btn.active::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* ============================================================
+   SUMMARY CARDS
+   ============================================================ */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -234,102 +315,125 @@ body {
   padding: 8px 12px;
   margin-top: 4px;
 }
+
 .s-card {
   background: var(--bg-card);
   border-radius: 12px;
   padding: 10px 8px;
   text-align: center;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .s-card .sc-label {
-  font-family: var(--font-text);
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
 }
+
 .s-card .sc-amount {
   font-size: 1rem;
   font-weight: 700;
   margin-top: 2px;
 }
+
 .s-card.income .sc-amount { color: var(--green); }
 .s-card.expense .sc-amount { color: var(--red); }
 .s-card.balance .sc-amount { color: var(--gold); }
 
-/* โครงหน้าทั่วไป (page container) */
+/* ============================================================
+   PAGES
+   ============================================================ */
 .page {
   display: none;
   padding: 4px 12px 80px 12px;
   animation: fadeIn 0.25s ease;
 }
 .page.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .page-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--gold);
+  background: linear-gradient(90deg, var(--gold-light), var(--gold-dim));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 8px 0 2px 0;
+  letter-spacing: 0.01em;
 }
+
 .page-sub {
   font-size: 0.7rem;
-  font-family: var(--font-text);
   color: var(--muted);
   margin-bottom: 10px;
 }
 
-/* ฟอร์มเพิ่มรายการ (หน้าแรก + ฟอร์มบาง cp-form ทั่วไป) */
+/* ============================================================
+   FORMS
+   ============================================================ */
 .cp-form {
   background: var(--bg-card);
   border-radius: 12px;
   padding: 12px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
 }
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
 }
+
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+
 .form-group label {
   font-size: 0.55rem;
-  font-family: var(--font-text);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
 }
+
 .form-group input,
 .form-group select {
   background: var(--bg);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   color: var(--text);
   font-size: 0.85rem;
   font-family: var(--font-text);
   width: 100%;
 }
+
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
   border-color: var(--gold-dim);
-  font-family: var(--font-text);
+  box-shadow: 0 0 0 3px rgba(200, 168, 75, 0.1);
 }
+
 .mode-toggle {
   display: flex;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border-soft);
 }
+
 .mode-btn {
   flex: 1;
   padding: 4px 0;
@@ -342,21 +446,18 @@ body {
   transition: 0.15s;
   font-weight: 600;
 }
+
 .mode-btn.active {
   background: var(--gold-dim);
-  color: #000;
-  font-family: var(--font-text);
-}
-.mode-btn.income.active { background: var(--green); color: #000; 
-  font-family: var(--font-text);
-}
-.mode-btn.expense.active { background: var(--red); color: #fff; 
-  font-family: var(--font-text);
+  color: #fff;
 }
 
+.mode-btn.income.active { background: var(--green); color: #fff; }
+.mode-btn.expense.active { background: var(--red); color: #fff; }
+
 .btn-neon {
-  background: var(--gold-dim);
-  color: #000;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
+  color: #1a1a2e;
   border: none;
   border-radius: 8px;
   padding: 8px 12px;
@@ -364,30 +465,39 @@ body {
   font-size: 0.85rem;
   font-family: var(--font-text);
   cursor: pointer;
-  transition: 0.15s;
+  transition: 0.12s ease;
   width: 100%;
+  box-shadow: var(--shadow-btn);
 }
-.btn-neon:hover { opacity: 0.85; 
-  font-family: var(--font-text);
+
+.btn-neon:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px -6px rgba(200, 168, 75, 0.45);
+}
+
+.btn-neon:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px -4px rgba(200, 168, 75, 0.35);
 }
 
 .note-toggle {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-family: var(--font-text);
 }
+
 .note-toggle button {
   background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   padding: 4px 8px;
   color: var(--muted);
   font-size: 0.65rem;
-  font-family: var(--font-text);
   cursor: pointer;
   text-align: left;
 }
+
 .note-toggle input {
   background: var(--bg);
   border: 1px solid var(--border-soft);
@@ -398,13 +508,16 @@ body {
   font-family: var(--font-text);
 }
 
-/* แถบเครื่องมือ (นำเข้า/ล้างข้อมูล) */
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
 .toolbar {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 10px;
 }
+
 .btn-tool {
   background: var(--bg-card);
   border: 1px solid var(--border-gold);
@@ -419,16 +532,21 @@ body {
   align-items: center;
   gap: 4px;
 }
-.btn-tool:hover { border-color: var(--gold-dim); color: var(--text); 
-  font-family: var(--font-text);
+
+.btn-tool:hover {
+  border-color: var(--gold-dim);
+  color: var(--text);
 }
 
-/* ปุ่มกรองประเภทรายการ */
+/* ============================================================
+   FILTERS
+   ============================================================ */
 .filter {
   display: flex;
   gap: 6px;
   margin-bottom: 8px;
 }
+
 .filter-btn {
   background: transparent;
   border: 1px solid var(--border-soft);
@@ -440,20 +558,20 @@ body {
   cursor: pointer;
   transition: 0.15s;
 }
+
 .filter-btn.active {
   border-color: var(--gold-dim);
   color: var(--gold);
-  background: rgba(239, 207, 7, 0.06);
-  font-family: var(--font-text);
+  background: rgba(200, 168, 75, 0.06);
 }
 
-/* แถบกรองกระเป๋าเงิน */
 .wallet-bar {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
+
 .wallet-chip {
   background: var(--bg-card);
   border: 1px solid var(--border-gold);
@@ -465,14 +583,16 @@ body {
   cursor: pointer;
   transition: 0.15s;
 }
+
 .wallet-chip.active {
   border-color: var(--gold-dim);
   color: var(--gold);
-  background: rgba(239, 207, 7, 0.06);
-  font-family: var(--font-text);
+  background: rgba(200, 168, 75, 0.06);
 }
 
-/* ลิสต์รายการ (การ์ดแต่ละแถว) */
+/* ============================================================
+   LISTS
+   ============================================================ */
 .list-header {
   font-size: 0.7rem;
   color: var(--muted);
@@ -480,6 +600,7 @@ body {
   border-bottom: 1px solid var(--border-gold);
   margin-bottom: 6px;
 }
+
 .item {
   display: flex;
   justify-content: space-between;
@@ -489,11 +610,16 @@ body {
   border-radius: 10px;
   margin-bottom: 4px;
   border-left: 3px solid transparent;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease;
 }
+
+.item:active { transform: scale(0.995); }
 .item.income { border-left-color: var(--green); }
 .item.expense { border-left-color: var(--red); }
 
 .item-left { flex: 1; min-width: 0; }
+
 .item .name {
   font-size: 0.85rem;
   font-weight: 500;
@@ -502,22 +628,27 @@ body {
   gap: 4px;
   flex-wrap: wrap;
 }
+
 .item .meta {
   font-size: 0.6rem;
   color: var(--muted);
 }
+
 .item-right {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
+
 .item .amount {
   font-weight: 700;
   font-size: 0.9rem;
 }
+
 .item.income .amount { color: var(--green); }
 .item.expense .amount { color: var(--red); }
+
 .btn-del {
   background: transparent;
   border: none;
@@ -528,8 +659,10 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
 }
-.btn-del:hover { color: var(--red); background: rgba(255, 79, 100, 0.1); 
-  font-family: var(--font-text);
+
+.btn-del:hover {
+  color: var(--red);
+  background: rgba(229, 75, 94, 0.08);
 }
 
 .note-chip {
@@ -547,132 +680,25 @@ body {
   font-size: 0.8rem;
 }
 
-/* ป๊อปอัปทั่วไป (แก้ไข/ยืนยัน) */
-.modal-bg {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  opacity: 0;
-  pointer-events: none;
-  transition: 0.2s;
-}
-.modal-bg.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-.modal {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 20px;
-  max-width: 400px;
-  width: 100%;
-  border: 1px solid var(--border-gold);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.modal h2 {
-  color: var(--gold);
-  font-size: 1.1rem;
-  margin-bottom: 12px;
-}
-.modal-row {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.modal-row label {
-  font-size: 0.7rem;
-  color: var(--muted);
-}
-.modal-row input,
-.modal-row select {
-  background: var(--bg);
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  padding: 6px 8px;
-  color: var(--text);
-  font-size: 0.85rem;
-  width: 100%;
-  font-family: var(--font-text);
-}
-.modal-row input:focus,
-.modal-row select:focus {
-  outline: none;
-  border-color: var(--gold-dim);
-  font-family: var(--font-text);
-}
-.modal-btns {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
-.modal-btns button {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border-soft);
-  background: transparent;
-  color: var(--text);
-  font-weight: 600;
-  cursor: pointer;
-  font-family: var(--font-text);
-}
-.modal-btns .btn-cancel { color: var(--muted); 
-  font-family: var(--font-text);
-}
-.modal-btns .btn-save {
-  border-color: var(--gold-dim);
-  color: var(--gold);
-  font-family: var(--font-text);
-}
-.modal-btns .btn-save:hover { background: rgba(239, 207, 7, 0.06); 
-  font-family: var(--font-text);
-}
-
-/* ข้อความแจ้งเตือนมุมจอ */
-.toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-card);
-  border: 1px solid var(--gold-dim);
-  border-radius: 12px;
-  padding: 8px 20px;
-  color: var(--text);
-  font-size: 0.8rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: 0.25s;
-  z-index: 999;
-  max-width: 90%;
-}
-.toast.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* หน้ากระเป๋าเงิน/บัญชี */
+/* ============================================================
+   WALLET PAGE
+   ============================================================ */
 .wsc-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-bottom: 12px;
 }
+
 .wsc-card {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 10px;
   text-align: center;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .wsc-name { font-size: 0.7rem; color: var(--muted); }
 .wsc-bal { font-size: 1rem; font-weight: 700; margin-top: 2px; }
 
@@ -685,20 +711,21 @@ body {
   justify-content: space-between;
   align-items: center;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .wc-name { font-weight: 600; font-size: 0.85rem; }
 .wc-meta { font-size: 0.6rem; color: var(--muted); }
 .wc-bal { font-weight: 700; font-size: 0.95rem; }
+
 .btn-wallet-del {
   background: transparent;
   border: none;
   color: var(--muted);
   cursor: pointer;
-  font-family: var(--font-text);
 }
-.btn-wallet-del:hover { color: var(--red); 
-  font-family: var(--font-text);
-}
+
+.btn-wallet-del:hover { color: var(--red); }
 
 .transfer-form {
   display: grid;
@@ -708,8 +735,10 @@ body {
   border-radius: 12px;
   padding: 12px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
   margin-bottom: 12px;
 }
+
 .transfer-form select,
 .transfer-form input {
   background: var(--bg);
@@ -722,34 +751,33 @@ body {
   min-width: 0;
   font-family: var(--font-text);
 }
+
 .transfer-form button {
   grid-column: 1 / -1;
-  font-family: var(--font-text);
 }
 
-.section-title {
-  font-size: 0.7rem;
-  color: var(--muted);
-  margin: 10px 0 6px 0;
-  letter-spacing: 0.05em;
-}
-
-/* หน้ายืมเงิน */
+/* ============================================================
+   LOAN PAGE
+   ============================================================ */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-bottom: 8px;
 }
+
 .stat-card {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 10px;
   text-align: center;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .stat-card .lc-label { font-size: 0.6rem; color: var(--muted); }
 .stat-card .lc-amount { font-size: 1rem; font-weight: 700; }
+
 .stat-card.red .lc-amount { color: var(--red); }
 .stat-card.green .lc-amount { color: var(--green); }
 .stat-card.blue .lc-amount { color: var(--blue); }
@@ -762,8 +790,10 @@ body {
   background: var(--bg-card);
   border-radius: 10px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
   margin-bottom: 10px;
 }
+
 .sb-label { font-size: 0.8rem; color: var(--muted); }
 .sb-amount { font-weight: 700; font-size: 1.1rem; }
 
@@ -776,7 +806,9 @@ body {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 4px;
+  box-shadow: var(--shadow-card);
 }
+
 .loan-tab,
 .inst-tab,
 .cat-tab {
@@ -791,27 +823,36 @@ body {
   cursor: pointer;
   transition: 0.15s;
 }
+
 .loan-tab.active,
 .inst-tab.active,
 .cat-tab.active {
-  background: var(--gold-dim);
-  color: #000;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
+  color: #1a1a2e;
+  box-shadow: 0 3px 10px -5px rgba(200, 168, 75, 0.35);
 }
 
+/* ============================================================
+   PERSON CARDS (LOAN)
+   ============================================================ */
 .person-card {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 6px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .person-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .person-name { font-weight: 600; font-size: 0.9rem; }
 .person-remain { font-weight: 700; font-size: 0.95rem; }
+
 .person-prog {
   height: 6px;
   background: var(--border-gold);
@@ -819,14 +860,17 @@ body {
   margin: 6px 0 2px 0;
   overflow: hidden;
 }
+
 .person-prog-fill {
   height: 100%;
-  background: var(--green);
+  background: linear-gradient(90deg, #1fae70, var(--green));
   border-radius: 4px;
   transition: 0.3s;
 }
+
 .person-prog-text { font-size: 0.6rem; color: var(--muted); }
 .person-txns { margin-top: 6px; }
+
 .person-txn-row {
   display: flex;
   justify-content: space-between;
@@ -836,17 +880,22 @@ body {
   border-bottom: 1px solid rgba(200, 168, 75, 0.08);
 }
 
-/* หน้าผ่อนชำระ */
+/* ============================================================
+   INSTALLMENT PAGE
+   ============================================================ */
 .inst-item {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 6px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .inst-name { font-weight: 600; font-size: 0.85rem; }
 .inst-meta { font-size: 0.6rem; color: var(--muted); }
 .inst-remain { font-weight: 700; font-size: 0.95rem; color: var(--gold); }
+
 .inst-progress {
   height: 6px;
   background: var(--border-gold);
@@ -854,29 +903,35 @@ body {
   margin: 6px 0 2px 0;
   overflow: hidden;
 }
+
 .inst-fill {
   height: 100%;
-  background: var(--gold-dim);
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-light));
   border-radius: 4px;
   transition: 0.3s;
 }
+
 .inst-progress-text { font-size: 0.6rem; color: var(--muted); }
+
 .inst-detail {
   display: flex;
   gap: 12px;
   margin: 6px 0;
 }
+
 .inst-stat { text-align: center; }
 .inst-stat-label { font-size: 0.5rem; color: var(--muted); }
 .inst-stat-val { font-size: 0.8rem; font-weight: 600; }
+
 .inst-actions {
   display: flex;
   gap: 6px;
   margin-top: 6px;
 }
+
 .btn-pay {
-  background: var(--gold-dim);
-  color: #000;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
+  color: #1a1a2e;
   border: none;
   border-radius: 6px;
   padding: 4px 12px;
@@ -885,6 +940,7 @@ body {
   font-weight: 600;
   font-family: var(--font-text);
 }
+
 .btn-del-sm {
   background: transparent;
   border: 1px solid var(--border-gold);
@@ -892,16 +948,14 @@ body {
   padding: 4px 10px;
   color: var(--muted);
   cursor: pointer;
-  font-family: var(--font-text);
 }
-.btn-del-sm:hover { color: var(--red); 
-  font-family: var(--font-text);
-}
+
+.btn-del-sm:hover { color: var(--red); }
 
 .inst-done-badge {
   font-size: 0.55rem;
   background: var(--green);
-  color: #000;
+  color: #fff;
   padding: 1px 8px;
   border-radius: 10px;
   font-weight: 600;
@@ -912,20 +966,25 @@ body {
   border-top: 1px solid var(--border-gold);
   padding-top: 6px;
 }
+
 .pay-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.65rem;
   color: var(--muted);
 }
+
 .pr-amount { color: var(--gold); }
 
-/* หน้าหมวดหมู่ */
+/* ============================================================
+   CATEGORY PAGE
+   ============================================================ */
 .cat-add-row {
   display: flex;
   gap: 6px;
   margin-bottom: 10px;
 }
+
 .cat-add-row input {
   flex: 1;
   background: var(--bg);
@@ -935,9 +994,10 @@ body {
   color: var(--text);
   font-family: var(--font-text);
 }
+
 .cat-add-row button {
-  background: var(--gold-dim);
-  color: #000;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
+  color: #1a1a2e;
   border: none;
   border-radius: 8px;
   padding: 6px 14px;
@@ -954,7 +1014,9 @@ body {
   background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 3px;
+  box-shadow: var(--shadow-card);
 }
+
 .cat-item .ci-default {
   font-size: 0.5rem;
   background: var(--border-gold);
@@ -963,16 +1025,15 @@ body {
   border-radius: 4px;
   margin-left: 6px;
 }
+
 .btn-cat-del {
   background: transparent;
   border: none;
   color: var(--muted);
   cursor: pointer;
-  font-family: var(--font-text);
 }
-.btn-cat-del:hover { color: var(--red); 
-  font-family: var(--font-text);
-}
+
+.btn-cat-del:hover { color: var(--red); }
 
 .btn-reset {
   background: transparent;
@@ -983,16 +1044,17 @@ body {
   font-size: 0.65rem;
   cursor: pointer;
   margin-bottom: 10px;
-  font-family: var(--font-text);
-}
-.btn-reset:hover { border-color: var(--red); color: var(--red); 
-  font-family: var(--font-text);
 }
 
-/* หน้าสรุป/แดชบอร์ด (กราฟ) */
+.btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+/* ============================================================
+   SUMMARY / CHARTS
+   ============================================================ */
 .month-sel-wrap {
   margin-bottom: 10px;
 }
+
 .month-sel-wrap select {
   background: var(--bg-card);
   border: 1px solid var(--border-gold);
@@ -1003,19 +1065,23 @@ body {
   font-size: 0.85rem;
   font-family: var(--font-text);
 }
+
 .sum-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-bottom: 8px;
 }
+
 .sum-card {
   background: var(--bg-card);
   border-radius: 10px;
   padding: 10px;
   text-align: center;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .sum-card.income .sc-amount { color: var(--green); }
 .sum-card.expense .sc-amount { color: var(--red); }
 
@@ -1025,17 +1091,21 @@ body {
   padding: 12px;
   margin-bottom: 12px;
   border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-card);
 }
+
 .chart-title {
   font-size: 0.7rem;
   color: var(--muted);
   margin-bottom: 6px;
 }
+
 .chart-tabs {
   display: flex;
   gap: 4px;
   margin-bottom: 8px;
 }
+
 .chart-tab {
   padding: 3px 12px;
   background: transparent;
@@ -1045,6 +1115,7 @@ body {
   font-size: 0.6rem;
   cursor: pointer;
 }
+
 .chart-tab.active {
   border-color: var(--gold-dim);
   color: var(--gold);
@@ -1056,6 +1127,7 @@ body {
   gap: 6px;
   margin-top: 8px;
 }
+
 .legend-item {
   display: flex;
   align-items: center;
@@ -1063,6 +1135,7 @@ body {
   font-size: 0.6rem;
   color: var(--muted);
 }
+
 .legend-dot {
   width: 10px;
   height: 10px;
@@ -1075,6 +1148,7 @@ body {
   gap: 8px;
   padding: 3px 0;
 }
+
 .bar-label {
   font-size: 0.65rem;
   color: var(--muted);
@@ -1084,6 +1158,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .bar-track {
   flex: 1;
   height: 6px;
@@ -1091,13 +1166,16 @@ body {
   border-radius: 4px;
   overflow: hidden;
 }
+
 .bar-fill {
   height: 100%;
   border-radius: 4px;
   transition: 0.3s;
 }
+
 .bar-fill.income { background: var(--green); }
 .bar-fill.expense { background: var(--red); }
+
 .bar-val {
   font-size: 0.65rem;
   color: var(--text);
@@ -1111,12 +1189,16 @@ body {
   padding: 4px 0;
   border-bottom: 1px solid rgba(200, 168, 75, 0.08);
 }
+
 .top-item .ti-amount { color: var(--red); font-weight: 600; font-size: 0.85rem; }
 
-/* หน้าค้นหา */
+/* ============================================================
+   SEARCH PAGE
+   ============================================================ */
 .search-wrap {
   margin-bottom: 10px;
 }
+
 .search-wrap input {
   background: var(--bg-card);
   border: 1px solid var(--border-gold);
@@ -1127,205 +1209,184 @@ body {
   font-size: 0.95rem;
   font-family: var(--font-text);
 }
+
 .search-wrap input:focus {
   outline: none;
   border-color: var(--gold-dim);
-  font-family: var(--font-text);
+  box-shadow: 0 0 0 3px rgba(200, 168, 75, 0.1);
 }
 
-/* แถบเลื่อน (scrollbar) */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
 /* ============================================================
-   Premium refinements — layered depth, gold gradients, glow
+   MODALS
    ============================================================ */
-
-/* Header: hairline glow + subtle lift */
-.app-header {
-  box-shadow: 0 1px 0 rgba(239, 207, 7, 0.05), 0 10px 24px -18px rgba(0, 0, 0, 0.9);
-}
-.brand-logo { filter: drop-shadow(0 0 6px rgba(239, 207, 7, 0.35)); }
-
-/* Sidebar depth */
-.sidebar { box-shadow: 20px 0 40px -20px rgba(0, 0, 0, 0.8); }
-.sidebar-btn.active {
-  background: linear-gradient(90deg, rgba(239, 207, 7, 0.12), rgba(239, 207, 7, 0.03));
-  box-shadow: inset 2px 0 0 var(--gold);
-}
-
-/* Bottom nav: gold hairline + glow on active */
-.nav-grid { box-shadow: 0 -10px 24px -18px rgba(0, 0, 0, 0.9); }
-.nav-btn { position: relative; }
-.nav-btn.active { text-shadow: 0 0 10px rgba(239, 207, 7, 0.35); }
-.nav-btn.active::after {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
 }
 
-/* Card-family: consistent elevated, gold-edged surfaces */
-.s-card, .sum-card, .stat-card, .wsc-card, .cp-form, .chart-wrap, .item,
-.person-card, .inst-item, .wallet-card, .modal, .balance-row, .cat-item,
-.transfer-form {
-  box-shadow: var(--shadow-card);
-  background-image: linear-gradient(165deg, var(--bg-card-2), var(--bg-card) 55%);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.item:active, .wallet-card:active, .inst-item:active, .person-card:active {
-  transform: scale(0.995);
+.modal-bg.open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* Gold glow on the headline balance figures */
-.s-card.balance .sc-amount,
-.sb-amount,
-.inst-remain {
-  text-shadow: 0 0 14px rgba(239, 207, 7, 0.22);
-}
-.sc-amount, .wc-bal, .lc-amount, .item .amount, .inst-remain, .sb-amount, .wsc-bal {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
-
-/* Page title: subtle gradient text for a premium masthead feel */
-.page-title {
-  background: linear-gradient(90deg, var(--gold-light), var(--gold-dim));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: 0.01em;
-}
-
-/* Primary CTA: gradient gold with lift on press */
-.btn-neon {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
-  box-shadow: var(--shadow-btn);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-  font-family: var(--font-text);
-}
-.btn-neon:hover { opacity: 1; transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(200, 168, 75, 0.55); 
-  font-family: var(--font-text);
-}
-.btn-neon:active { transform: translateY(0); box-shadow: 0 3px 10px -4px rgba(200, 168, 75, 0.5); 
-  font-family: var(--font-text);
-}
-
-.btn-pay, .cat-add-row button {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
-  box-shadow: 0 4px 12px -5px rgba(200, 168, 75, 0.5);
-  font-family: var(--font-text);
-}
-
-.loan-tab.active, .inst-tab.active, .cat-tab.active, .mode-btn.active:not(.income):not(.expense) {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold-dim));
-  box-shadow: 0 3px 10px -5px rgba(200, 168, 75, 0.5);
-  font-family: var(--font-text);
-}
-
-/* Inputs: soft gold focus ring instead of a flat border flip */
-.form-group input:focus, .form-group select:focus,
-.modal-row input:focus, .modal-row select:focus,
-.search-wrap input:focus, .note-toggle input:focus,
-.cat-add-row input:focus, .transfer-form input:focus, .transfer-form select:focus {
-  box-shadow: 0 0 0 3px rgba(239, 207, 7, 0.1);
-  font-family: var(--font-text);
-}
-
-/* Progress bars: gold gradient fill instead of flat */
-.inst-fill {
-  background: linear-gradient(90deg, var(--gold-dim), var(--gold-light));
-}
-.person-prog-fill {
-  background: linear-gradient(90deg, #1fae70, var(--green));
-}
-
-/* Modal: gold accent cap + deeper elevation */
 .modal {
-  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.9), 0 0 0 1px var(--border-gold);
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  border: 1px solid var(--border-gold);
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-gold);
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
 }
+
 .modal::before {
   content: "";
   position: absolute;
   top: 0; left: 16px; right: 16px;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  opacity: 0.6;
+  opacity: 0.4;
 }
 
-/* Toast: gold-edged glass */
-.toast {
-  box-shadow: 0 16px 34px -14px rgba(0, 0, 0, 0.85);
-  background-image: linear-gradient(165deg, var(--bg-card-2), var(--bg-card) 60%);
+.modal h2 {
+  color: var(--gold);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
 }
 
-/* Scrollbar: gold gradient thumb */
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--gold-light), var(--gold-dim));
+.modal-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .btn-neon, .item, .wallet-card, .inst-item, .person-card {
-    transition: none !important;
-  
-    font-family: var(--font-text);
-}
+.modal-row label {
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
-/* ============================================================
-   Unified input / select theme — same look on every page
-   ============================================================ */
-.form-group input, .form-group select,
-.modal-row input, .modal-row select,
-.note-toggle input,
-.transfer-form input, .transfer-form select,
-.cat-add-row input,
-.month-sel-wrap select,
-.search-wrap input,
-.cp-form input:not([type="checkbox"]), .cp-form select {
+.modal-row input,
+.modal-row select {
   background: var(--bg);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   color: var(--text);
   font-size: 0.85rem;
+  width: 100%;
   font-family: var(--font-text);
 }
 
-.form-group input, .form-group select,
-.modal-row input, .modal-row select,
-.note-toggle input,
-.transfer-form input, .transfer-form select,
-.month-sel-wrap select,
-.search-wrap input,
-.cp-form input:not([type="checkbox"]), .cp-form select {
-  width: 100%;
-}
-
-.form-group input:focus, .form-group select:focus,
-.modal-row input:focus, .modal-row select:focus,
-.note-toggle input:focus,
-.transfer-form input:focus, .transfer-form select:focus,
-.cat-add-row input:focus,
-.month-sel-wrap select:focus,
-.search-wrap input:focus,
-.cp-form input:not([type="checkbox"]):focus, .cp-form select:focus {
+.modal-row input:focus,
+.modal-row select:focus {
   outline: none;
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(239, 207, 7, 0.1);
+  box-shadow: 0 0 0 3px rgba(200, 168, 75, 0.1);
 }
 
-/* Bare fields stacked directly in .cp-form (wallet / bill / installment forms)
-   need their own spacing since they aren't wrapped in .form-group rows */
-.cp-form > input:not([type="checkbox"]),
-.cp-form > select {
-  margin-bottom: 8px;
-  display: block;
+.modal-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.modal-btns button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-btns .btn-cancel { color: var(--muted); }
+.modal-btns .btn-save {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+.modal-btns .btn-save:hover { background: rgba(200, 168, 75, 0.06); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-card);
+  border: 1px solid var(--gold-dim);
+  border-radius: 12px;
+  padding: 8px 20px;
+  color: var(--text);
+  font-size: 0.8rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.25s;
+  z-index: 999;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.12);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.section-title {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin: 10px 0 6px 0;
+  letter-spacing: 0.05em;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-light), var(--gold-dim));
+  border-radius: 4px;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .btn-neon, .item, .wallet-card, .inst-item, .person-card {
+    transition: none !important;
+  }
 }
