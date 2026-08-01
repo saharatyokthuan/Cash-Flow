@@ -168,7 +168,7 @@ body {
   bottom: 0;
   width: 280px;
   background: var(--bg-card);
-  border-right: 1px solid var(--border-gold);
+  border-left: 1px solid var(--border-gold);
   z-index: 200;
   transform: translateX(-100%);
   transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
@@ -387,6 +387,22 @@ body {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.cp-form > input,
+.cp-form > select {
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: var(--font-text);
+  width: 100%;
+}
+
+.cp-form > button {
+  width: 100%;
 }
 
 .form-row {
