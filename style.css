@@ -30,7 +30,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Sarabun';
+  font-family: 'Pattaya';
 }
 
 body {
@@ -1324,7 +1324,7 @@ body {
 .modal-btns button {
   flex: 1;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 1px;
   border: 1px solid var(--border-soft);
   background: transparent;
   color: var(--text);
@@ -1349,7 +1349,7 @@ body {
   transform: translateX(-50%) translateY(20px);
   background: var(--bg-card);
   border: 1px solid var(--gold-dim);
-  border-radius: 12px;
+  border-radius: 1px;
   padding: 8px 20px;
   color: var(--text);
   font-size: 0.8rem;
@@ -1396,7 +1396,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, var(--gold-light), var(--gold-dim));
-  border-radius: 4px;
+  border-radius: 1px;
 }
 
 /* ============================================================
