@@ -12,7 +12,7 @@
   --gold: #c8a84b;
   --gold-light: #e6d07a;
   --gold-dim: #b8963a;
-  --red: #e54b5e;
+  --red: #FF0000;
   --green: #2daa7a;
   --blue: #4f8bff;
   --amber: #e6973a;
@@ -30,6 +30,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Sarabun';
 }
 
 body {
