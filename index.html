@@ -2,40 +2,38 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Cash-Flow</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
+<!-- ====== HEADER ====== -->
+
 <header class="app-header">
-  <div class="header-left">
+  <div class="header-main">
     <button class="hamburger-btn" onclick="toggleMenu()" aria-label="เมนู" aria-expanded="false">
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
     </button>
+    
     <a href="#" class="brand-logo" onclick="event.preventDefault(); showPage('page-home', document.querySelector('.nav-btn'))">💰</a>
-    <div class="header-titles">
+    
+  <div class="header-titles">
       <span onclick="showPage('page-home', document.querySelector('.nav-btn'))" class="app-title">Financial Record</span>
       <span id="CurrentDate" class="app-subtitle"></span>
     </div>
   </div>
+  
   <button id="settingsBtn" class="btn-settings" onclick="showPage('page-settings', this)" aria-label="ตั้งค่า">⚙️</button>
 </header>
 
-<!-- ============================================================
-     SIDEBAR OVERLAY
-     ============================================================ -->
+<!-- ====== OVERLAY ====== -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMenu()"></div>
 
-<!-- ============================================================
-     SIDEBAR
-     ============================================================ -->
+<!-- ====== SIDEBAR ====== -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span class="sidebar-title">💰 เมนู</span>
@@ -54,9 +52,7 @@
   </div>
 </nav>
 
-<!-- ============================================================
-     BOTTOM NAVIGATION
-     ============================================================ -->
+<!-- ====== BOTTOM NAVIGATION ====== -->
 <div class="nav-grid">
   <button class="nav-btn active" onclick="showPage('page-home',this)"><span class="nav-icon">🏠</span>หน้าหลัก</button>
   <button class="nav-btn" onclick="showPage('page-wallet',this)"><span class="nav-icon">💳</span>กระเป๋าเงิน</button>
@@ -68,9 +64,7 @@
   <button class="nav-btn" onclick="showPage('page-search',this)"><span class="nav-icon">🔍</span>ค้นหา</button>
 </div>
 
-<!-- ============================================================
-     SUMMARY CARDS
-     ============================================================ -->
+<!-- ====== SUMMARY CARDS ====== -->
 <div class="summary-grid">
   <div class="s-card income">
     <div class="sc-label">รายรับ</div>
@@ -86,9 +80,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     PAGE: HOME
-     ============================================================ -->
+<!-- ====== PAGE: HOME ====== -->
 <div class="page active" id="page-home">
   <div class="page-title">หน้าหลัก</div>
   <div class="page-sub" id="monthLabel"></div>
@@ -156,9 +148,7 @@
   <div id="list"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: WALLET
-     ============================================================ -->
+<!-- ====== PAGE: WALLET ====== -->
 <div class="page" id="page-wallet">
   <div class="page-title">กระเป๋าเงิน</div>
   <div class="page-sub">จัดการกระเป๋าเงินและโอนระหว่างบัญชี</div>
@@ -187,9 +177,7 @@
   <div id="walletList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: LOAN
-     ============================================================ -->
+<!-- ====== PAGE: LOAN ====== -->
 <div class="page" id="page-loan">
   <div class="page-title">ติดตามยืม-คืน</div>
   <div class="page-sub">สรุปจากหมวด "ยืม" (รายรับ) และ "คืน" (รายจ่าย)</div>
@@ -215,9 +203,7 @@
   <div id="loanList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: INSTALLMENT
-     ============================================================ -->
+<!-- ====== PAGE: INSTALLMENT ====== -->
 <div class="page" id="page-install">
   <div class="page-title">สินเชื่อ</div>
   <div class="page-sub">ติดตามยอดผ่อนมือถือ & สินเชื่อ</div>
@@ -256,9 +242,7 @@
   <div id="instList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: CATEGORY
-     ============================================================ -->
+<!-- ====== PAGE: CATEGORY ====== -->
 <div class="page" id="page-category">
   <div class="page-title">หมวดหมู่</div>
   <div class="page-sub">เพิ่ม-ลบหมวดหมู่ตามต้องการ</div>
@@ -275,9 +259,7 @@
   <div id="catList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: SUMMARY
-     ============================================================ -->
+<!-- ====== PAGE: SUMMARY ====== -->
 <div class="page" id="page-summary">
   <div class="page-title">แดชบอร์ด</div>
   <div class="page-sub">ภาพรวมการเงินรายเดือน</div>
@@ -329,9 +311,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     PAGE: Budget
-     ============================================================ -->
+<!-- ====== PAGE: Budget ====== -->
 <div class="page" id="page-budget">
   <div class="page-title">Budget</div>
   <div class="page-sub">รายการที่ต้องทำ (รับ/จ่าย) — เรียงตามที่บันทึกล่าสุด</div>
@@ -359,9 +339,7 @@
   <div id="billList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: SEARCH
-     ============================================================ -->
+<!-- ====== PAGE: SEARCH ====== -->
 <div class="page" id="page-search">
   <div class="page-title">ค้นหา</div>
   <div class="page-sub">ค้นหารายการจากชื่อ, หมายเหตุ, หรือหมวดหมู่</div>
@@ -379,9 +357,7 @@
   <div id="searchList"></div>
 </div>
 
-<!-- ============================================================
-     PAGE: SETTINGS
-     ============================================================ -->
+<!-- ====== PAGE: SETTINGS ====== -->
 <div class="page" id="page-settings">
   <div class="page-title">ตั้งค่า</div>
   <div class="page-sub">ข้อมูลแอปและการจัดการข้อมูล</div>
@@ -407,11 +383,9 @@
   </div>
 </div>
 
-<!-- ============================================================
-     MODALS
-     ============================================================ -->
+<!-- ====== MODALS ====== -->
 
-<!-- Edit Modal -->
+<!-- ====== Edit Modal -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>แก้ไขรายการ</h2>
@@ -430,7 +404,7 @@
   </div>
 </div>
 
-<!-- Installment Payment Modal -->
+<!-- ====== Installment Payment Modal -->
 <div class="modal-bg" id="instPayModalBg">
   <div class="modal">
     <h2 id="instPayTitle">จ่ายงวด</h2>
@@ -446,7 +420,7 @@
   </div>
 </div>
 
-<!-- Confirm Modal -->
+<!-- ====== Confirm Modal -->
 <div class="modal-bg" id="confirmModalBg">
   <div class="modal" style="max-width:340px;">
     <h2 id="confirmTitle" style="color:var(--red);">ยืนยันการดำเนินการ</h2>
@@ -458,9 +432,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     TOAST
-     ============================================================ -->
+<!-- ====== TOAST ====== -->
 <div class="toast" id="toast"></div>
 <script src="script.js" defer></script>
 </body>

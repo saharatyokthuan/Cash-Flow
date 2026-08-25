@@ -66,7 +66,7 @@ body {
   box-shadow: 0 1px 0 rgba(200, 168, 75, 0.08), 0 6px 16px -12px rgba(0, 0, 0, 0.12);
 }
 
-.header-left {
+.header-main {
   display: flex;
   align-items: center;
   gap: 0.6rem;
