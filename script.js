@@ -26,7 +26,7 @@
 const STORAGE_KEY = 'budgetCtrl_LocalData';
 
 // สถานะข้อมูลหลักของแอป (โหลดจาก localStorage ตอนเริ่มทำงาน)
-window.items = []; // รายการรายรับ/รายจ่ายทั้งหมด
+window.items = [];
 window.wallets = []; // กระเป๋าเงิน/บัญชีทั้งหมด
 window.installments = []; // รายการผ่อนชำระทั้งหมด
 window.categories = {}; // หมวดหมู่ แยกตาม income/expense
@@ -50,21 +50,6 @@ let catTab = 'income'; // แท็บที่เลือกอยู่ใน
 // ชุดสีที่ใช้วาดกราฟแท่ง/โดนัทในหน้าสรุป
 const COLORS_EXP = ['#ff4f64', '#ff8c5a', '#ffb347', '#ffd700', '#c8a84b', '#e07b9a', '#ff6b8a', '#ffaa44', '#e6861a', '#d4604a'];
 const COLORS_INC = ['#39d98a', '#4f9bff', '#a78bfa', '#34d399', '#60a5fa', '#818cf8', '#2dd4bf', '#38bdf8', '#c084fc', '#86efac'];
-
-// ข้อมูลเริ่มต้น ใช้ตอนเปิดแอปครั้งแรกหรือข้อมูลเสีย
-const DEFAULT_DATA = {
-  items: [],
-  wallets: [
-    { id: 1, name: 'Cash', init: 0 },
-    { id: 2, name: 'Bangkok Bank', init: 0 }
-  ],
-  installments: [],
-  categories: {
-    income: ['เงินเดือน', 'ยืม', 'โอน', 'อื่นๆ'],
-    expense: ['อาหาร', 'เดินทาง', 'ค่าเช่า', 'บันเทิง', 'ค่าน้ำไฟ', 'อินเทอร์เน็ต', 'ผ่อนมือถือ', 'ผ่อนสินเชื่อ', 'คืน', 'โอน', 'อื่นๆ']
-  },
-  bills: []
-};
 
 // วันนี้ตามเวลาเครื่อง (ปรับ timezone offset แล้ว) — ใช้เป็นค่าเริ่มต้นของวันที่ทั่วทั้งแอป
 const tzoffset = new Date().getTimezoneOffset() * 60000;
@@ -96,40 +81,6 @@ function loadLocalStorage() {
       window.installments = data.installments || [];
       window.categories = data.categories || DEFAULT_DATA.categories;
       window.bills = data.bills || [];
-
-      // ถ้าเคยมีข้อมูล "รายการคาดว่าจะจ่าย" แบบเก่า ให้แปลงมาเป็นบิลใหม่อัตโนมัติ (ไม่ทำให้ข้อมูลหาย)
-      let migrated = false;
-      if (!data.bills && Array.isArray(data.upcoming) && data.upcoming.length) {
-        window.bills = data.upcoming.map((u) => ({
-          id: u.id,
-          name: u.name,
-          amount: u.amount,
-          type: 'expense',
-          dueDate: today,
-          status: 'unpaid',
-          repeatMonthly: false,
-          category: u.category || 'อื่นๆ',
-          walletId: window.wallets[0]?.id || 1
-        }));
-        migrated = true;
-      }
-      if (window.categories.income && !window.categories.income.includes('โอน')) {
-        window.categories.income.push('โอน');
-        migrated = true;
-      }
-      if (window.categories.expense && !window.categories.expense.includes('โอน')) {
-        window.categories.expense.push('โอน');
-        migrated = true;
-      }
-      if (migrated) saveLocalStorage();
-    } catch (e) {
-      loadDefault();
-    }
-  } else {
-    loadDefault();
-  }
-}
-
 // ตั้งค่าข้อมูลเริ่มต้น (ใช้ตอนยังไม่เคยมีข้อมูล หรือข้อมูลเสีย)
 function loadDefault() {
   window.items = [...DEFAULT_DATA.items];
@@ -1784,8 +1735,6 @@ function initApp() {
       }
     }, 200);
   });
-
-  console.log(' Budget//Ctrl พร้อมใช้งาน (Homepage ปรับโหมดแล้ว)');
 }
 
 initApp();

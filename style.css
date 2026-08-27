@@ -1555,3 +1555,6 @@ body {
     transition: none !important;
   }
 }
+* {
+  font-family: sans-serif ;
+}
