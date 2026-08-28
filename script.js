@@ -406,7 +406,8 @@ function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'wallet
  * ที่มีการเพิ่ม/ลบ/แก้ไขกระเป๋าเงินหรือรายการ
  */
 function refreshWalletFilterBars() {
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
 }
 
 /**
