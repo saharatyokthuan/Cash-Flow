@@ -22,6 +22,7 @@
      script.js and index.html in the same pass.
    ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Noto+Sans+Thai:wdth,wght@76.6,100..900&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Thasadith:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Pattaya&display=swap');
 
 /* ============================================================
@@ -29,9 +30,9 @@
    ============================================================ */
 :root {
   /* -- color: surfaces & text -- */
-  --bg: #f0f4fa;
-  --bg-card: #ffffff;
-  --bg-card-2: #f8fafc;
+  --bg: #FFFFFF;
+  --bg-card: #CBC5C5;
+  --bg-card-2: #6A5CFF;
   --text: #1a1a2e;
   --muted: #6b7a8a;
 
@@ -51,7 +52,7 @@
   --shadow-btn: 0 4px 12px -4px rgba(200, 168, 75, 0.35);
 
   /* -- type -- */
-  --font-text: 'Pattaya', 'Sarabun', sans-serif;
+  --font-text: 'Charm', sans-serif;
   --fs-2xs: 0.55rem;
   --fs-xs: 0.6rem;
   --fs-sm: 0.65rem;
@@ -100,7 +101,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Pattaya';
+  font-family: 'Charm';
 }
 
 body {
@@ -301,7 +302,7 @@ body {
   width: 22px;
   height: 2px;
   background: var(--text);
-  border-radius: 2px;
+  border-radius: 0.5px;
   transition: var(--t-fast);
 }
 
@@ -472,7 +473,7 @@ body {
   transform: translateX(-50%);
   width: 16px;
   height: 2px;
-  border-radius: 2px;
+  border-radius: 0.5px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 
@@ -1177,7 +1178,7 @@ body {
 .legend-dot {
   width: var(--sp-5);
   height: var(--sp-5);
-  border-radius: 50%;
+  border-radius: 10%;
 }
 
 .bar-row {
