@@ -208,7 +208,7 @@ function showConfirmModal(message, isDanger = true) {
       title.style.color = 'var(--red)';
       yesBtn.style.borderColor = 'var(--red) !important';
       yesBtn.style.color = 'var(--red)';
-      title.innerText = '⚠️ ยืนยันการลบ';
+      title.innerText = '⚠ ยืนยันการลบ';
     } else {
       title.style.color = 'var(--gold)';
       yesBtn.style.borderColor = 'var(--gold-dim) !important';
