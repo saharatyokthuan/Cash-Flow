@@ -30,10 +30,10 @@
    ============================================================ */
 :root {
   /* -- color: surfaces & text -- */
-  --bg: #FFFFFF;
-  --bg-card: #CBC5C5;
-  --bg-card-2: #6A5CFF;
-  --text: #1a1a2e;
+  --bg: #D1D1D1;
+  --bg-card: #DDDDDD;
+  --bg-card-2: #888888;
+  --text: #000000;
   --muted: #6b7a8a;
 
   /* -- color: brand / semantic -- */
@@ -52,7 +52,7 @@
   --shadow-btn: 0 4px 12px -4px rgba(200, 168, 75, 0.35);
 
   /* -- type -- */
-  --font-text: 'Charm', sans-serif;
+  --font-text: 'Kanit', sans-serif;
   --fs-2xs: 0.55rem;
   --fs-xs: 0.6rem;
   --fs-sm: 0.65rem;
@@ -101,7 +101,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Charm';
+  font-family: 'Kanit';
 }
 
 body {

@@ -1436,6 +1436,8 @@ async function markBillPaid(id) {
 
   saveLocalStorage();
   renderBillsPage();
+  renderList();
+  renderSearchList();
   update();
   renderWalletPage();
   refreshWalletFilterBars();
