@@ -671,7 +671,7 @@ function closeModal() { document.getElementById('modalBg').classList.remove('ope
  * บันทึกการแก้ไขรายการ
  */
 function saveEdit() {
-  const id = parseInt(document.getElementById('editId').value);
+  const id = parseFloat(document.getElementById('editId').value);
   const idx = App.state.items.findIndex(i => i.id === id);
   if (idx === -1) return;
   const amount = parseFloat(document.getElementById('editAmount').value);
@@ -1771,7 +1771,7 @@ async function clearAll() {
 }
 
 /**
- * -----------------------------------------------------------
+ * ------------------------------------------------------------
  * 17) เริ่มต้นแอป (App Init)
  * ------------------------------------------------------------
  * จุดเริ่มต้นของแอป: โหลดข้อมูลแล้ววาดหน้าจอครั้งแรก
