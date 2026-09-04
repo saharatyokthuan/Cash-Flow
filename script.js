@@ -23,40 +23,39 @@
 // ------------------------------------------------------------
 // 1) ค่าคงที่ & สถานะเริ่มต้นของระบบ
 // ------------------------------------------------------------
-const STORAGE_KEY = 'budgetCtrl_LocalData';
+const STORAGE_KEY = 'cashflow_datacenter';
 
-// สถานะข้อมูลหลักของแอปทั้งหมดรวมไว้ในที่เดียว (แทนการกระจาย window.* /
-// let หลายตัวทั่วไฟล์) เพื่อให้เห็นภาพรวมของ "อะไรคือสถานะที่เปลี่ยนได้"
-// ในที่เดียว และลดความเสี่ยงที่ชื่อตัวแปรจะชนกับโค้ดอื่นบนหน้าเว็บ
-//
-// ฟังก์ชันทั้งหมดยังเป็น top-level `function` ตามเดิม (ไม่ใช้ module)
-// เพราะ index.html เรียกใช้งานผ่าน onclick="..." ซึ่งต้องหาฟังก์ชันจาก
-// window ได้ — เปลี่ยนแค่ "ข้อมูล" ให้เข้าที่เดียว ไม่เปลี่ยนฟังก์ชัน
-const App = {
-  state: {
-    items: [],          // รายการรายรับ/รายจ่ายทั้งหมด
-    wallets: [],         // กระเป๋าเงิน/บัญชีทั้งหมด
-    installments: [],    // รายการผ่อนชำระทั้งหมด
-    categories: {},       // หมวดหมู่ แยกตาม income/expense
-    bills: [],            // รายการในหน้าลิสต์ทูเพย์ (รายรับ/รายจ่ายที่ยังไม่เกิดขึ้นจริง)
+// สถานะข้อมูลหลักของแอป (โหลดจาก localStorage ตอนเริ่มทำงาน)
+window.items = [];          // รายการรายรับ/รายจ่ายทั้งหมด
+window.wallets = [];        // กระเป๋าเงิน/บัญชีทั้งหมด
+window.installments = [];   // รายการผ่อนชำระทั้งหมด
+window.categories = {};     // หมวดหมู่ แยกตาม income/expense
+window.bills = [];          // รายการในหน้าลิสต์ทูเพย์ (รายรับ/รายจ่ายที่ยังไม่เกิดขึ้นจริง)
 
-    walletFilter: 'all',        // ตัวกรองกระเป๋าเงินของหน้าแรก
-    walletFilterSearch: 'all',  // ตัวกรองกระเป๋าเงินของหน้าค้นหา
-    editTargetId: null,         // id ของรายการที่กำลังแก้ไขอยู่ (ถ้ามี)
+window.walletFilter = 'all';        // ตัวกรองกระเป๋าเงินของหน้าแรก
+window.walletFilterSearch = 'all';  // ตัวกรองกระเป๋าเงินของหน้าค้นหา
+window.editTargetId = null;         // id ของรายการที่กำลังแก้ไขอยู่ (ถ้ามี)
 
-    filter: 'all',              // ตัวกรองประเภทรายการของหน้าแรก
-    filterSearch: 'all',        // ตัวกรองประเภทรายการของหน้าค้นหา
-    currentMode: 'income',      // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าแรก
-    currentBillMode: 'expense', // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าลิสต์ทูเพย์
-    chartBarType: 'expense',    // ประเภทข้อมูลที่แสดงในกราฟแท่ง (หน้าสรุป)
-    chartDonutType: 'expense',  // ประเภทข้อมูลที่แสดงในกราฟโดนัท (หน้าสรุป)
-    confirmResolver: null,      // ตัวรับผลลัพธ์ของป๊อปอัปยืนยัน (resolve ของ Promise)
-    loanDisplayMode: 'person',  // มุมมองหน้ายืมเงิน: แยกตามคน/แสดงเป็นลิสต์
-    instTab: 'phone',           // แท็บที่เลือกอยู่ในหน้าผ่อนชำระ
-    catTab: 'income',           // แท็บที่เลือกอยู่ในหน้าหมวดหมู่
-    searchDebounceTimer: null   // ตัวจับเวลา debounce ของช่องค้นหา
-  }
+let filter = 'all';         // ตัวกรองประเภทรายการของหน้าแรก
+let filterSearch = 'all';   // ตัวกรองประเภทรายการของหน้าค้นหา
+let currentMode = 'income';       // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าแรก
+let currentBillMode = 'expense';  // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าลิสต์ทูเพย์
+let chartBarType = 'expense';     // ประเภทข้อมูลที่แสดงในกราฟแท่ง (หน้าสรุป)
+let chartDonutType = 'expense';   // ประเภทข้อมูลที่แสดงในกราฟโดนัท (หน้าสรุป)
+let confirmResolver = null;       // ตัวรับผลลัพธ์ของป๊อปอัปยืนยัน (resolve ของ Promise)
+let loanDisplayMode = 'person';   // มุมมองหน้ายืมเงิน: แยกตามคน/แสดงเป็นลิสต์
+let instTab = 'phone';            // แท็บที่เลือกอยู่ในหน้าผ่อนชำระ
+let catTab = 'income';            // แท็บที่เลือกอยู่ในหน้าหมวดหมู่
+
+// ค่าเริ่มต้นของการตั้งค่าแอป (แก้ไขได้จากหน้า Settings)
+const DEFAULT_SETTINGS = {
+  theme: 'light',            // light | dark | green | blue
+  confirmDelete: true,       // ยืนยันก่อนลบทุกครั้ง
+  billReminder: true,        // ไฮไลต์บิลที่เลยกำหนดในหน้าลิสต์ทูเพย์
+  dateFormat: 'long',        // long (Fri 24 Jul 2026) | thai (24/07/2026) | iso (2026-07-24)
+  showCurrencySymbol: false  // แสดงสัญลักษณ์ ฿ ต่อท้ายยอดเงินในลิสต์รายการ
 };
+window.appSettings = { ...DEFAULT_SETTINGS };
 
 // ชุดสีที่ใช้วาดกราฟแท่ง/โดนัทในหน้าสรุป
 const COLORS_EXP = ['#ff4f64', '#ff8c5a', '#ffb347', '#ffd700', '#c8a84b', '#e07b9a', '#ff6b8a', '#ffaa44', '#e6861a', '#d4604a'];
@@ -84,47 +83,36 @@ const today = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
 // ------------------------------------------------------------
 // 2) บันทึก/โหลดข้อมูล (Storage)
 // ------------------------------------------------------------
-/**
- * บันทึกข้อมูลทั้งหมดลง localStorage ของเบราว์เซอร์
- * @returns {boolean} true ถ้าบันทึกสำเร็จ, false ถ้าเกิดข้อผิดพลาด
- *   (เช่น localStorage เต็ม หรือถูกปิดใช้งานโดยเบราว์เซอร์)
- */
+// บันทึกข้อมูลทั้งหมดลง localStorage ของเบราว์เซอร์
 function saveLocalStorage() {
   const data = {
-    items: App.state.items || [],
-    wallets: App.state.wallets || [],
-    installments: App.state.installments || [],
-    categories: App.state.categories || {},
-    bills: App.state.bills || []
+    items: window.items || [],
+    wallets: window.wallets || [],
+    installments: window.installments || [],
+    categories: window.categories || {},
+    bills: window.bills || [],
+    settings: window.appSettings || DEFAULT_SETTINGS
   };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  } catch (e) {
-    console.error('saveLocalStorage failed:', e);
-    showToast('บันทึกข้อมูลไม่สำเร็จ (พื้นที่จัดเก็บอาจเต็ม)');
-    return false;
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-/**
- * โหลดข้อมูลจาก localStorage ตอนเปิดแอป (ถ้าไม่มีให้ใช้ค่าเริ่มต้น)
- */
+// โหลดข้อมูลจาก localStorage ตอนเปิดแอป (ถ้าไม่มีให้ใช้ค่าเริ่มต้น)
 function loadLocalStorage() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      App.state.items = data.items || [];
-      App.state.wallets = data.wallets || DEFAULT_DATA.wallets;
-      App.state.installments = data.installments || [];
-      App.state.categories = data.categories || DEFAULT_DATA.categories;
-      App.state.bills = data.bills || [];
+      window.items = data.items || [];
+      window.wallets = data.wallets || DEFAULT_DATA.wallets;
+      window.installments = data.installments || [];
+      window.categories = data.categories || DEFAULT_DATA.categories;
+      window.bills = data.bills || [];
+      window.appSettings = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
 
       // ถ้าเคยมีข้อมูล "รายการคาดว่าจะจ่าย" แบบเก่า ให้แปลงมาเป็นบิลใหม่อัตโนมัติ (ไม่ทำให้ข้อมูลหาย)
       let migrated = false;
       if (!data.bills && Array.isArray(data.upcoming) && data.upcoming.length) {
-        App.state.bills = data.upcoming.map(u => ({
+        window.bills = data.upcoming.map(u => ({
           id: u.id,
           name: u.name,
           amount: u.amount,
@@ -133,16 +121,16 @@ function loadLocalStorage() {
           status: 'unpaid',
           repeatMonthly: false,
           category: u.category || 'อื่นๆ',
-          walletId: App.state.wallets[0]?.id || 1
+          walletId: window.wallets[0]?.id || 1
         }));
         migrated = true;
       }
-      if (App.state.categories.income && !App.state.categories.income.includes('โอน')) {
-        App.state.categories.income.push('โอน');
+      if (window.categories.income && !window.categories.income.includes('โอน')) {
+        window.categories.income.push('โอน');
         migrated = true;
       }
-      if (App.state.categories.expense && !App.state.categories.expense.includes('โอน')) {
-        App.state.categories.expense.push('โอน');
+      if (window.categories.expense && !window.categories.expense.includes('โอน')) {
+        window.categories.expense.push('โอน');
         migrated = true;
       }
       if (migrated) saveLocalStorage();
@@ -154,48 +142,37 @@ function loadLocalStorage() {
   }
 }
 
-/**
- * ตั้งค่าข้อมูลเริ่มต้น (ใช้ตอนยังไม่เคยมีข้อมูล หรือข้อมูลเสีย)
- */
+// ตั้งค่าข้อมูลเริ่มต้น (ใช้ตอนยังไม่เคยมีข้อมูล หรือข้อมูลเสีย)
 function loadDefault() {
-  App.state.items = [...DEFAULT_DATA.items];
-  App.state.wallets = [...DEFAULT_DATA.wallets];
-  App.state.installments = [...DEFAULT_DATA.installments];
-  App.state.categories = {
+  window.items = [...DEFAULT_DATA.items];
+  window.wallets = [...DEFAULT_DATA.wallets];
+  window.installments = [...DEFAULT_DATA.installments];
+  window.categories = {
     income: [...DEFAULT_DATA.categories.income],
     expense: [...DEFAULT_DATA.categories.expense]
   };
-  App.state.bills = [...DEFAULT_DATA.bills];
+  window.bills = [...DEFAULT_DATA.bills];
+  window.appSettings = { ...DEFAULT_SETTINGS };
   saveLocalStorage();
 }
 
-/**
- * ------------------------------------------------------------
- * 3) ฟังก์ชันช่วยเหลือทั่วไป (Utilities)
- * ------------------------------------------------------------
- * แปลงอักขระพิเศษกันโค้ด HTML หลุด (ป้องกัน XSS)
- * @param {*} str
- */
+// ------------------------------------------------------------
+// 3) ฟังก์ชันช่วยเหลือทั่วไป (Utilities)
+// ------------------------------------------------------------
+// แปลงอักขระพิเศษกันโค้ด HTML หลุด (ป้องกัน XSS)
 function escapeHtml(str) {
   if (!str) return '';
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   return String(str).replace(/[&<>"']/g, m => map[m]);
 }
 
-/**
- * แสดงข้อความแจ้งเตือนเล็กๆ ที่มุมจอ (toast)
- * @param {*} msg
- */
+// แสดงข้อความแจ้งเตือนเล็กๆ ที่มุมจอ (toast)
 function showToast(msg) {
   const t = document.getElementById('toast');
   if (t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 }
 
-/**
- * เปิดป๊อปอัปถามยืนยันก่อนทำรายการสำคัญ (ลบ/แก้ไข)
- * @param {*} message
- * @param {*} isDanger
- */
+// เปิดป๊อปอัปถามยืนยันก่อนทำรายการสำคัญ (ลบ/แก้ไข)
 function showConfirmModal(message, isDanger = true) {
   return new Promise((resolve) => {
     const bg = document.getElementById('confirmModalBg');
@@ -208,7 +185,7 @@ function showConfirmModal(message, isDanger = true) {
       title.style.color = 'var(--red)';
       yesBtn.style.borderColor = 'var(--red) !important';
       yesBtn.style.color = 'var(--red)';
-      title.innerText = '⚠ ยืนยันการลบ';
+      title.innerText = '⚠️ ยืนยันการลบ';
     } else {
       title.style.color = 'var(--gold)';
       yesBtn.style.borderColor = 'var(--gold-dim) !important';
@@ -216,51 +193,67 @@ function showConfirmModal(message, isDanger = true) {
       title.innerText = '⚠ ยืนยันการดำเนินการ';
     }
     bg.classList.add('open');
-    App.state.confirmResolver = resolve;
+    confirmResolver = resolve;
   });
 }
 
-/**
- * เติมตัวเลือกหมวดหมู่ลงใน dropdown ตามประเภทรายรับ/รายจ่าย
- * @param {*} type
- * @param {*} selectId
- * @param {*} cur
- */
+// เติมตัวเลือกหมวดหมู่ลงใน dropdown ตามประเภทรายรับ/รายจ่าย
 function updateCategoryDropdown(type, selectId, cur = '') {
   const sel = document.getElementById(selectId);
   if (!sel) return;
-  const cats = App.state.categories[type] || [];
+  const cats = window.categories[type] || [];
   sel.innerHTML = cats.map(c =>
     `<option value="${escapeHtml(c)}" ${c === cur ? 'selected' : ''}>${escapeHtml(c)}</option>`
   ).join('');
 }
 
-/**
- * คำนวณยอดเงินคงเหลือของกระเป๋าเงินใบหนึ่ง
- * @param {*} walletId
- */
+// คำนวณยอดเงินคงเหลือของกระเป๋าเงินใบหนึ่ง
 function getWalletBalance(walletId) {
-  const items = App.state.items || [];
+  const items = window.items || [];
   const inc = items.filter(i => i.type === 'income' && i.walletId === walletId).reduce((s, i) => s + i.amount, 0);
   const exp = items.filter(i => i.type === 'expense' && i.walletId === walletId).reduce((s, i) => s + i.amount, 0);
-  const w = App.state.wallets.find(w => w.id === walletId);
+  const w = window.wallets.find(w => w.id === walletId);
   const init = w ? (w.init || 0) : 0;
   return init + inc - exp;
 }
 
-/**
- * แปลงวันที่ (yyyy-mm-dd) ให้เป็นรูปแบบ "Fri 24 Jul 2026"
- * @param {*} dateStr
- */
-function formatBillDate(dateStr) {
+// จัดรูปแบบตัวเลขเงิน — ใส่คอมม่าเสมอ และต่อท้าย ฿ ถ้าเปิดไว้ในหน้าตั้งค่า
+function formatMoney(amount) {
+  const n = (amount || 0).toLocaleString();
+  return (window.appSettings && window.appSettings.showCurrencySymbol) ? `${n} ฿` : n;
+}
+
+// แปลงวันที่ (yyyy-mm-dd) ตามรูปแบบที่ตั้งค่าไว้ (long / thai / iso)
+function formatDateDisplay(dateStr) {
   if (!dateStr) return '';
+  const mode = (window.appSettings && window.appSettings.dateFormat) || 'long';
+  if (mode === 'iso') return dateStr;
   const d = new Date(dateStr + 'T00:00:00');
+  if (mode === 'thai') {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
   return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/**
- * แสดงวันที่ปัจจุบันบนหัวแอป
- */
+// แปลงวันที่ (yyyy-mm-dd) ให้เป็นรูปแบบ "Fri 24 Jul 2026"
+function formatBillDate(dateStr) {
+  return formatDateDisplay(dateStr);
+}
+
+// ป๊อปอัปยืนยันก่อนลบ — เคารพการตั้งค่า "ยืนยันก่อนลบทุกครั้ง"; ถ้าปิดไว้จะลบทันทีไม่ถาม
+async function confirmDelete(message) {
+  if (window.appSettings && window.appSettings.confirmDelete === false) return true;
+  return await showConfirmModal(message, true);
+}
+
+// สลับธีมสีของแอปตามค่าที่เลือกไว้ในหน้าตั้งค่า
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme || 'light');
+}
+
+// แสดงวันที่ปัจจุบันบนหัวแอป
 function displayCurrentDate() {
   const now = new Date();
   const formattedDate = now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -268,14 +261,10 @@ function displayCurrentDate() {
   if (el) el.textContent = ` ${formattedDate}`;
 }
 
-/**
- * ------------------------------------------------------------
- * 4) นำทาง & เมนู (Navigation)
- * ------------------------------------------------------------
- * สลับการแสดงผลไปยังหน้าที่เลือก (หัวใจของระบบนำทาง)
- * @param {*} id
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 4) นำทาง & เมนู (Navigation)
+// ------------------------------------------------------------
+// สลับการแสดงผลไปยังหน้าที่เลือก (หัวใจของระบบนำทาง)
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -329,9 +318,7 @@ function showPage(id, el) {
   closeMenu();
 }
 
-/**
- * เปิด/ปิดเมนู sidebar
- */
+// เปิด/ปิดเมนู sidebar
 function toggleMenu() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -351,9 +338,7 @@ function toggleMenu() {
   }
 }
 
-/**
- * ปิดเมนู sidebar
- */
+// ปิดเมนู sidebar
 function closeMenu() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -364,14 +349,12 @@ function closeMenu() {
   btn.setAttribute('aria-expanded', 'false');
 }
 
-/**
- * ------------------------------------------------------------
- * 5) ตัวกรองกระเป๋าเงิน (ใช้ร่วมกันหลายหน้า)
- * ------------------------------------------------------------
- * เติมรายชื่อกระเป๋าเงินลงใน dropdown ทุกจุดที่ใช้
- */
+// ------------------------------------------------------------
+// 5) ตัวกรองกระเป๋าเงิน (ใช้ร่วมกันหลายหน้า)
+// ------------------------------------------------------------
+// เติมรายชื่อกระเป๋าเงินลงใน dropdown ทุกจุดที่ใช้
 function updateWalletDropdowns() {
-  const wallets = App.state.wallets || [];
+  const wallets = window.wallets || [];
   const opts = wallets.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
   ['walletSelect', 'transferFrom', 'transferTo', 'instPayWallet', 'editWallet'].forEach(id => {
     const el = document.getElementById(id);
@@ -381,16 +364,12 @@ function updateWalletDropdowns() {
   if (tTo && wallets.length > 1) tTo.value = wallets[1]?.id || wallets[0]?.id || '';
 }
 
-/**
- * วาดแถบตัวกรองกระเป๋าเงิน (ใช้ซ้ำได้หลายหน้า)
- * @param {*} targetId
- * @param {*} filterVar
- */
+// วาดแถบตัวกรองกระเป๋าเงิน (ใช้ซ้ำได้หลายหน้า)
 function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'walletFilter') {
   const bar = document.getElementById(targetId);
   if (!bar) return;
-  const wallets = App.state.wallets || [];
-  const currentFilter = App.state[filterVar] || 'all';
+  const wallets = window.wallets || [];
+  const currentFilter = window[filterVar] || 'all';
   const allActive = currentFilter === 'all';
   let html = `<button class="wallet-chip ${allActive ? 'active' : ''}" onclick="setWalletFilter('all','${targetId}','${filterVar}',this)">ทั้งหมด</button>`;
   wallets.forEach(w => {
@@ -400,25 +379,9 @@ function renderWalletFilterBar(targetId = 'walletFilterBar', filterVar = 'wallet
   bar.innerHTML = html;
 }
 
-/**
- * รีเฟรชแถบตัวกรองกระเป๋าเงินทั้งของหน้าแรกและหน้าค้นหาพร้อมกัน
- * เรียกใช้แทนการเขียน renderWalletFilterBar() สองบรรทัดซ้ำ ๆ ทุกจุด
- * ที่มีการเพิ่ม/ลบ/แก้ไขกระเป๋าเงินหรือรายการ
- */
-function refreshWalletFilterBars() {
-  renderWalletFilterBar('walletFilterBar', 'walletFilter');
-  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
-}
-
-/**
- * ตั้งค่ากระเป๋าเงินที่ใช้กรองรายการ
- * @param {*} id
- * @param {*} targetId
- * @param {*} filterVar
- * @param {*} el
- */
+// ตั้งค่ากระเป๋าเงินที่ใช้กรองรายการ
 function setWalletFilter(id, targetId, filterVar, el) {
-  App.state[filterVar] = (id === 'all') ? 'all' : parseInt(id);
+  window[filterVar] = (id === 'all') ? 'all' : parseInt(id);
   const bar = document.getElementById(targetId);
   if (bar) {
     bar.querySelectorAll('.wallet-chip').forEach(b => b.classList.remove('active'));
@@ -431,16 +394,12 @@ function setWalletFilter(id, targetId, filterVar, el) {
   }
 }
 
-/**
- * ------------------------------------------------------------
- * 6) หน้าแรก — เพิ่มรายการ (Home)
- * ------------------------------------------------------------
- * สลับโหมดรายรับ/รายจ่ายในฟอร์มหน้าแรก
- * @param {*} mode
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 6) หน้าแรก — เพิ่มรายการ (Home)
+// ------------------------------------------------------------
+// สลับโหมดรายรับ/รายจ่ายในฟอร์มหน้าแรก
 function setMode(mode, el) {
-  App.state.currentMode = mode;
+  currentMode = mode;
   const scope = document.querySelectorAll('#homeModeToggle .mode-btn');
   scope.forEach(btn => btn.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -456,9 +415,7 @@ function setMode(mode, el) {
   updateCategoryDropdown(mode, 'categorySelect');
 }
 
-/**
- * เปิด/ปิดช่องกรอกหมายเหตุในฟอร์มเพิ่มรายการ
- */
+// เปิด/ปิดช่องกรอกหมายเหตุในฟอร์มเพิ่มรายการ
 function toggleNoteInput() {
   const input = document.getElementById('noteInput');
   const btn = document.getElementById('noteToggleBtn');
@@ -474,21 +431,19 @@ function toggleNoteInput() {
   }
 }
 
-/**
- * เพิ่มรายการรายรับ/รายจ่ายใหม่ (จากฟอร์มหน้าแรก)
- */
+// เพิ่มรายการรายรับ/รายจ่ายใหม่ (จากฟอร์มหน้าแรก)
 function addItem() {
   const name = document.getElementById('nameInput').value.trim();
   const amount = parseFloat(document.getElementById('amountInput').value);
-  const type = App.state.currentMode;
+  const type = currentMode;
   const date = document.getElementById('dateInput').value || today;
   const note = document.getElementById('noteInput').value.trim();
   const category = document.getElementById('categorySelect').value;
-  const walletId = parseInt(document.getElementById('walletSelect').value) || (App.state.wallets[0]?.id || 1);
+  const walletId = parseInt(document.getElementById('walletSelect').value) || (window.wallets[0]?.id || 1);
 
   if (!name || isNaN(amount) || amount <= 0) return showToast('กรุณากรอกข้อมูลให้ครบ');
 
-  App.state.items.push({ id: Date.now(), name, amount, type, date, note, category, walletId });
+  window.items.push({ id: Date.now(), name, amount, type, date, note, category, walletId });
   saveLocalStorage();
 
   document.getElementById('nameInput').value = '';
@@ -501,55 +456,48 @@ function addItem() {
   renderList();
   update();
   renderWalletPage();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('บันทึกรายการแล้ว');
 }
 
-/**
- * ลบรายการรายรับ/รายจ่าย (ต้องกดยืนยันก่อน)
- * @param {*} id
- */
+// ลบรายการรายรับ/รายจ่าย (ต้องกดยืนยันก่อน)
 async function deleteItem(id) {
-  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
-    App.state.items = App.state.items.filter(i => i.id !== id);
+  if (await confirmDelete('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
+    window.items = window.items.filter(i => i.id !== id);
     saveLocalStorage();
     renderList();
     renderSearchList();
     update();
     renderWalletPage();
-    refreshWalletFilterBars();
+    renderWalletFilterBar('walletFilterBar', 'walletFilter');
+    renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
     showToast('ลบแล้ว');
   }
 }
 
-/**
- * ตั้งค่าตัวกรองประเภทรายการในหน้าค้นหา
- * @param {*} val
- * @param {*} el
- */
+// ตั้งค่าตัวกรองประเภทรายการในหน้าค้นหา
 function setFilter(val, el) {
   const isSearchPage = document.getElementById('page-search')?.classList.contains('active');
   if (isSearchPage) {
-    App.state.filterSearch = val;
+    filterSearch = val;
     document.querySelectorAll('#page-search .filter-btn').forEach(b => b.classList.remove('active'));
     if (el) el.classList.add('active');
     renderSearchList();
   } else {
-    App.state.filter = val;
+    filter = val;
     document.querySelectorAll('#page-home .filter-btn').forEach(b => b.classList.remove('active'));
     if (el) el.classList.add('active');
     renderList();
   }
 }
 
-/**
- * วาดลิสต์รายการในหน้าแรก
- */
+// วาดลิสต์รายการในหน้าแรก
 function renderList() {
-  const items = App.state.items || [];
+  const items = window.items || [];
   let filtered = items.filter(i => {
-    const matchFilter = App.state.filter === 'all' || i.type === App.state.filter;
-    const matchWallet = App.state.walletFilter === 'all' || i.walletId === App.state.walletFilter;
+    const matchFilter = filter === 'all' || i.type === filter;
+    const matchWallet = window.walletFilter === 'all' || i.walletId === window.walletFilter;
     return matchFilter && matchWallet;
   });
 
@@ -561,26 +509,24 @@ function renderList() {
   const c = document.getElementById('list');
   if (!c) return;
   if (!filtered.length) { c.innerHTML = '<div class="empty">— ไม่พบรายการ —</div>'; return; }
-  const wallets = App.state.wallets || [];
+  const wallets = window.wallets || [];
 
   c.innerHTML = filtered.map(i => `
     <div class="item ${i.type}">
       <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
         <div class="name">${escapeHtml(i.name)}${i.note ? `<span class="note-chip">${escapeHtml(i.note)}</span>` : ''}</div>
-        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
+        <div class="meta">${formatDateDisplay(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
       </div>
       <div class="item-right">
-        <div class="amount">${i.type === 'income' ? '+' : '-'}${i.amount.toLocaleString()}</div>
+        <div class="amount">${i.type === 'income' ? '+' : '-'}${formatMoney(i.amount)}</div>
         <button class="btn-del" onclick="deleteItem(${i.id})">✕</button>
       </div>
     </div>`).join('');
 }
 
-/**
- * อัปเดตยอดสรุป (รายรับ/รายจ่าย/คงเหลือ) ด้านบนของแอป
- */
+// อัปเดตยอดสรุป (รายรับ/รายจ่าย/คงเหลือ) ด้านบนของแอป
 function update() {
-  const items = App.state.items || [];
+  const items = window.items || [];
   let inc = 0, exp = 0;
   items.forEach(i => { if (i.type === 'income') inc += i.amount; else exp += i.amount; });
   const incEl = document.getElementById('totalIncome');
@@ -591,19 +537,17 @@ function update() {
   if (balEl) balEl.innerText = (inc - exp).toLocaleString();
 }
 
-/**
- * ------------------------------------------------------------
- * 7) หน้าค้นหา (Search)
- * ------------------------------------------------------------
- * วาดลิสต์ผลลัพธ์ในหน้าค้นหา
- */
+// ------------------------------------------------------------
+// 7) หน้าค้นหา (Search)
+// ------------------------------------------------------------
+// วาดลิสต์ผลลัพธ์ในหน้าค้นหา
 function renderSearchList() {
   const search = document.getElementById('searchInputPage')?.value.toLowerCase().trim() || '';
-  const items = App.state.items || [];
+  const items = window.items || [];
   let filtered = items.filter(i => {
     const matchSearch = !search || i.name.toLowerCase().includes(search) || (i.note || '').toLowerCase().includes(search) || (i.category || '').toLowerCase().includes(search);
-    const matchFilter = App.state.filterSearch === 'all' || i.type === App.state.filterSearch;
-    const matchWallet = App.state.walletFilterSearch === 'all' || i.walletId === App.state.walletFilterSearch;
+    const matchFilter = filterSearch === 'all' || i.type === filterSearch;
+    const matchWallet = window.walletFilterSearch === 'all' || i.walletId === window.walletFilterSearch;
     return matchSearch && matchFilter && matchWallet;
   });
 
@@ -621,32 +565,29 @@ function renderSearchList() {
     return;
   }
 
-  const wallets = App.state.wallets || [];
+  const wallets = window.wallets || [];
   container.innerHTML = filtered.map(i => `
     <div class="item ${i.type}">
       <div class="item-left" onclick="openEdit(${i.id})" style="cursor:pointer;flex:1">
         <div class="name">${escapeHtml(i.name)}${i.note ? `<span class="note-chip">${escapeHtml(i.note)}</span>` : ''}</div>
-        <div class="meta">${escapeHtml(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
+        <div class="meta">${formatDateDisplay(i.date)} · ${escapeHtml(i.category || '')} · ${escapeHtml(wallets.find(w => w.id === i.walletId)?.name || '')}</div>
       </div>
       <div class="item-right">
-        <div class="amount">${i.type === 'income' ? '+' : '-'}${i.amount.toLocaleString()}</div>
+        <div class="amount">${i.type === 'income' ? '+' : '-'}${formatMoney(i.amount)}</div>
         <button class="btn-del" onclick="deleteItem(${i.id})">✕</button>
       </div>
     </div>
   `).join('');
 }
 
-/**
- * ------------------------------------------------------------
- * 8) ป๊อปอัปแก้ไข/ลบรายการ (Edit Modal — ใช้ร่วมกันหน้าแรก/ค้นหา)
- * ------------------------------------------------------------
- * เปิดป๊อปอัปแก้ไขรายการที่เลือก
- * @param {*} id
- */
+// ------------------------------------------------------------
+// 8) ป๊อปอัปแก้ไข/ลบรายการ (Edit Modal — ใช้ร่วมกันหน้าแรก/ค้นหา)
+// ------------------------------------------------------------
+// เปิดป๊อปอัปแก้ไขรายการที่เลือก
 function openEdit(id) {
-  const item = App.state.items.find(i => i.id === id);
+  const item = window.items.find(i => i.id === id);
   if (!item) return;
-  App.state.editTargetId = id;
+  window.editTargetId = id;
   document.getElementById('editId').value = id;
   document.getElementById('editDate').value = item.date;
   document.getElementById('editName').value = item.name;
@@ -662,25 +603,21 @@ function openEdit(id) {
   document.getElementById('modalBg').classList.add('open');
 }
 
-/**
- * ปิดป๊อปอัปแก้ไขรายการ
- */
+// ปิดป๊อปอัปแก้ไขรายการ
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
 
-/**
- * บันทึกการแก้ไขรายการ
- */
+// บันทึกการแก้ไขรายการ
 function saveEdit() {
-  const id = parseFloat(document.getElementById('editId').value);
-  const idx = App.state.items.findIndex(i => i.id === id);
+  const id = parseInt(document.getElementById('editId').value);
+  const idx = window.items.findIndex(i => i.id === id);
   if (idx === -1) return;
   const amount = parseFloat(document.getElementById('editAmount').value);
   const name = document.getElementById('editName').value.trim();
   if (!name || isNaN(amount) || amount <= 0) return showToast('ข้อมูลไม่ถูกต้อง');
 
-  const walletId = parseInt(document.getElementById('editWallet').value) || App.state.items[idx].walletId;
-  App.state.items[idx] = {
-    ...App.state.items[idx],
+  const walletId = parseInt(document.getElementById('editWallet').value) || window.items[idx].walletId;
+  window.items[idx] = {
+    ...window.items[idx],
     date: document.getElementById('editDate').value,
     name,
     note: document.getElementById('editNote').value.trim(),
@@ -695,18 +632,17 @@ function saveEdit() {
   renderSearchList();
   update();
   renderWalletPage();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('บันทึกแล้ว');
 }
 
-/**
- * ------------------------------------------------------------
- * 9) นำเข้า/ส่งออกข้อมูล (Import / Export)
- * ------------------------------------------------------------
- * ส่งออกข้อมูลทั้งหมดเป็นไฟล์ CSV
- */
+// ------------------------------------------------------------
+// 9) นำเข้า/ส่งออกข้อมูล (Import / Export)
+// ------------------------------------------------------------
+// ส่งออกข้อมูลทั้งหมดเป็นไฟล์ CSV
 function downloadCSV() {
-  if (!App.state.items.length) return showToast('ไม่มีข้อมูล');
+  if (!window.items.length) return showToast('ไม่มีข้อมูล');
 
   function formatDate(dateStr) {
     if (!dateStr) return '';
@@ -716,7 +652,7 @@ function downloadCSV() {
   }
 
   const header = 'วันที่,รายการ,จำนวนเงิน,หมวดหมู่,ประเภท,หมายเหตุ';
-  const rows = App.state.items.map(i => {
+  const rows = window.items.map(i => {
     const date = formatDate(i.date);
     const name = `"${i.name.replace(/"/g, '""')}"`;
     const amount = i.amount;
@@ -735,18 +671,16 @@ function downloadCSV() {
   showToast('ดาวน์โหลด CSV สำเร็จ');
 }
 
-/**
- * ส่งออกข้อมูลทั้งหมดเป็นไฟล์ XLSX (ใช้ไลบรารี SheetJS)
- */
+// ส่งออกข้อมูลทั้งหมดเป็นไฟล์ XLSX (ใช้ไลบรารี SheetJS)
 function downloadXLSX() {
-  if (!App.state.items || App.state.items.length === 0) {
+  if (!window.items || window.items.length === 0) {
     showToast('ไม่มีข้อมูลที่จะส่งออก');
     return;
   }
 
   try {
-    const rows = App.state.items.map(item => {
-      const wallet = App.state.wallets.find(w => w.id === item.walletId);
+    const rows = window.items.map(item => {
+      const wallet = window.wallets.find(w => w.id === item.walletId);
       return {
         'วันที่': item.date || '',
         'รายการ': item.name || '',
@@ -769,10 +703,7 @@ function downloadXLSX() {
   }
 }
 
-/**
- * นำเข้าข้อมูลจากไฟล์ XLSX
- * @param {*} event
- */
+// นำเข้าข้อมูลจากไฟล์ XLSX
 function importXLSX(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -807,9 +738,9 @@ function importXLSX(event) {
           }
         }
         const walletName = row['บัญชี'] || '';
-        let walletId = App.state.wallets.find(w => w.name === walletName)?.id || App.state.wallets[0]?.id || 1;
+        let walletId = window.wallets.find(w => w.name === walletName)?.id || window.wallets[0]?.id || 1;
 
-        App.state.items.push({
+        window.items.push({
           id: Date.now() + Math.random() * 1000,
           name,
           amount,
@@ -827,7 +758,8 @@ function importXLSX(event) {
       renderSearchList();
       update();
       renderWalletPage();
-      refreshWalletFilterBars();
+      renderWalletFilterBar('walletFilterBar', 'walletFilter');
+      renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
       showToast(`นำเข้า ${added} รายการสำเร็จ`);
     } catch (e) {
       console.error(e);
@@ -838,18 +770,16 @@ function importXLSX(event) {
   event.target.value = '';
 }
 
-/**
- * รวมข้อมูลทั้งหมดเป็น JSON สำหรับส่งออก/แชร์
- */
+// รวมข้อมูลทั้งหมดเป็น JSON สำหรับส่งออก/แชร์
 function exportForChat() {
   const payload = {
     source: 'budgetCtrl',
     exportedAt: new Date().toISOString(),
-    items: App.state.items || [],
-    wallets: App.state.wallets || [],
-    installments: App.state.installments || [],
-    categories: App.state.categories || {},
-    bills: App.state.bills || []
+    items: window.items || [],
+    wallets: window.wallets || [],
+    installments: window.installments || [],
+    categories: window.categories || {},
+    bills: window.bills || []
   };
   const json = JSON.stringify(payload);
 
@@ -875,10 +805,7 @@ function exportForChat() {
   });
 }
 
-/**
- * แสดงข้อมูลสำรองถ้าส่งออกไฟล์แบบปกติไม่ได้
- * @param {*} json
- */
+// แสดงข้อมูลสำรองถ้าส่งออกไฟล์แบบปกติไม่ได้
 function showExportFallback(json) {
   let bg = document.getElementById('exportFallbackBg');
   if (!bg) {
@@ -897,56 +824,51 @@ function showExportFallback(json) {
   document.getElementById('exportFallbackText').select();
 }
 
-/**
- * ------------------------------------------------------------
- * 10) หน้ากระเป๋าเงิน (Wallet)
- * ------------------------------------------------------------
- * เพิ่มกระเป๋าเงิน/บัญชีใหม่
- */
+// ------------------------------------------------------------
+// 10) หน้ากระเป๋าเงิน (Wallet)
+// ------------------------------------------------------------
+// เพิ่มกระเป๋าเงิน/บัญชีใหม่
 function addWallet() {
   const name = document.getElementById('walletNameInput').value.trim();
   const init = parseFloat(document.getElementById('walletInitInput').value) || 0;
   if (!name) return showToast('กรุณากรอกชื่อบัญชี');
-  if (App.state.wallets.find(w => w.name === name)) return showToast('มีบัญชีนี้แล้ว');
+  if (window.wallets.find(w => w.name === name)) return showToast('มีบัญชีนี้แล้ว');
   const id = Date.now();
-  App.state.wallets.push({ id, name, init });
+  window.wallets.push({ id, name, init });
   saveLocalStorage();
   document.getElementById('walletNameInput').value = '';
   document.getElementById('walletInitInput').value = 0;
   renderWalletPage();
   updateWalletDropdowns();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast('เพิ่มบัญชีแล้ว');
 }
 
-/**
- * ลบกระเป๋าเงิน (ต้องเหลืออย่างน้อย 1 ใบ)
- * @param {*} id
- */
+// ลบกระเป๋าเงิน (ต้องเหลืออย่างน้อย 1 ใบ)
 async function deleteWallet(id) {
-  if (App.state.wallets.length <= 1) return showToast('ต้องมีบัญชีอย่างน้อย 1 บัญชี');
+  if (window.wallets.length <= 1) return showToast('ต้องมีบัญชีอย่างน้อย 1 บัญชี');
 
-  const hasTransfer = App.state.items.some(i => i.transferId && (i.walletId === id));
-  if (hasTransfer && !await showConfirmModal('บัญชีนี้มีรายการโอนเงินอยู่ ยืนยันลบ?')) return;
+  const hasTransfer = window.items.some(i => i.transferId && (i.walletId === id));
+  if (hasTransfer && !await confirmDelete('บัญชีนี้มีรายการโอนเงินอยู่ ยืนยันลบ?')) return;
 
-  const used = App.state.items.some(i => i.walletId === id && !i.transferId);
-  if (used && !await showConfirmModal('บัญชีนี้มีรายการอยู่ ยืนยันลบ?')) return;
+  const used = window.items.some(i => i.walletId === id && !i.transferId);
+  if (used && !await confirmDelete('บัญชีนี้มีรายการอยู่ ยืนยันลบ?')) return;
 
-  if (!await showConfirmModal('คุณแน่ใจว่าต้องการลบบัญชีนี้?')) return;
+  if (!await confirmDelete('คุณแน่ใจว่าต้องการลบบัญชีนี้?')) return;
 
-  App.state.wallets = App.state.wallets.filter(w => w.id !== id);
+  window.wallets = window.wallets.filter(w => w.id !== id);
   saveLocalStorage();
   renderWalletPage();
   updateWalletDropdowns();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   renderList();
   renderSearchList();
   showToast('ลบบัญชีแล้ว');
 }
 
-/**
- * โอนเงินระหว่างกระเป๋าเงินสองใบ
- */
+// โอนเงินระหว่างกระเป๋าเงินสองใบ
 function doTransfer() {
   const fromId = parseInt(document.getElementById('transferFrom').value);
   const toId = parseInt(document.getElementById('transferTo').value);
@@ -955,11 +877,11 @@ function doTransfer() {
   if (fromId === toId) return showToast('บัญชีต้นทางและปลายทางห้ามเดียวกัน');
   if (isNaN(amount) || amount <= 0) return showToast('กรุณากรอกจำนวนเงิน');
 
-  const fromName = App.state.wallets.find(w => w.id === fromId)?.name || '';
-  const toName = App.state.wallets.find(w => w.id === toId)?.name || '';
+  const fromName = window.wallets.find(w => w.id === fromId)?.name || '';
+  const toName = window.wallets.find(w => w.id === toId)?.name || '';
   const transferId = `tr_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-  App.state.items.push({ id: Date.now(), name: `โอน → ${toName}`, amount, type: 'expense', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: fromId, transferId });
-  App.state.items.push({ id: Date.now() + Math.floor(Math.random() * 9000 + 1000), name: `รับโอน ← ${fromName}`, amount, type: 'income', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: toId, transferId });
+  window.items.push({ id: Date.now(), name: `โอน → ${toName}`, amount, type: 'expense', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: fromId, transferId });
+  window.items.push({ id: Date.now() + Math.floor(Math.random() * 9000 + 1000), name: `รับโอน ← ${fromName}`, amount, type: 'income', date: today, note: note || 'โอนเงิน', category: 'โอน', walletId: toId, transferId });
   saveLocalStorage();
   document.getElementById('transferAmount').value = '';
   document.getElementById('transferNote').value = '';
@@ -967,15 +889,14 @@ function doTransfer() {
   renderList();
   renderSearchList();
   update();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast(`โอน ${amount.toLocaleString()} ฿ สำเร็จ`);
 }
 
-/**
- * วาดหน้ากระเป๋าเงิน (ลิสต์บัญชี + ยอดคงเหลือ)
- */
+// วาดหน้ากระเป๋าเงิน (ลิสต์บัญชี + ยอดคงเหลือ)
 function renderWalletPage() {
-  const wallets = App.state.wallets || [];
+  const wallets = window.wallets || [];
   const grid = document.getElementById('walletSummary');
   if (grid) {
     grid.innerHTML = wallets.map(w => {
@@ -988,7 +909,7 @@ function renderWalletPage() {
     if (!wallets.length) { list.innerHTML = '<div class="empty">— ไม่มีบัญชี —</div>'; return; }
     list.innerHTML = wallets.map(w => {
       const bal = getWalletBalance(w.id);
-      const txCount = App.state.items.filter(i => i.walletId === w.id).length;
+      const txCount = window.items.filter(i => i.walletId === w.id).length;
       return `<div class="wallet-card">
         <div><div class="wc-name">💲 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init || 0).toLocaleString()} ฿</div></div>
         <div style="display:flex;align-items:center;gap:0.7rem">
@@ -1001,26 +922,20 @@ function renderWalletPage() {
   updateWalletDropdowns();
 }
 
-/**
- * ------------------------------------------------------------
- * 11) หน้ายืมเงิน (Loan)
- * ------------------------------------------------------------
- * สลับแท็บ ยืม/คืน ในหน้ายืมเงิน
- * @param {*} mode
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 11) หน้ายืมเงิน (Loan)
+// ------------------------------------------------------------
+// สลับแท็บ ยืม/คืน ในหน้ายืมเงิน
 function setLoanTab(mode, el) {
-  App.state.loanDisplayMode = mode;
+  loanDisplayMode = mode;
   document.querySelectorAll('.loan-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   renderLoan();
 }
 
-/**
- * วาดหน้ายืมเงิน (สรุปยอดยืม-คืน)
- */
+// วาดหน้ายืมเงิน (สรุปยอดยืม-คืน)
 function renderLoan() {
-  const items = App.state.items || [];
+  const items = window.items || [];
   const borrows = items.filter(i => i.type === 'income' && i.category === 'ยืม');
   const repays = items.filter(i => i.type === 'expense' && i.category === 'คืน');
   const totalBorrow = borrows.reduce((s, i) => s + i.amount, 0);
@@ -1035,7 +950,7 @@ function renderLoan() {
   remEl.innerText = activeRemain.toLocaleString() + ' ฿';
   remEl.style.color = activeRemain > 0 ? 'var(--red)' : 'var(--green)';
 
-  if (App.state.loanDisplayMode === 'list') {
+  if (loanDisplayMode === 'list') {
     document.getElementById('loanListHeader').innerText = `รายการทั้งหมด (${borrows.length + repays.length})`;
     const all = [...borrows.map(i => ({ ...i, ltype: 'borrow' })), ...repays.map(i => ({ ...i, ltype: 'repay' }))].sort((a, b) => b.date.localeCompare(a.date));
     document.getElementById('loanList').innerHTML = all.length ? all.map(i => `
@@ -1100,24 +1015,18 @@ function renderLoan() {
   }
 }
 
-/**
- * ------------------------------------------------------------
- * 12) หน้าผ่อนชำระ (Installment)
- * ------------------------------------------------------------
- * สลับแท็บประเภทในหน้าสินเชื่อ
- * @param {*} type
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 12) หน้าผ่อนชำระ (Installment)
+// ------------------------------------------------------------
+// สลับแท็บประเภทในหน้าสินเชื่อ
 function setInstTab(type, el) {
-  App.state.instTab = type;
+  instTab = type;
   document.querySelectorAll('.inst-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   renderInstallment();
 }
 
-/**
- * เพิ่มรายการผ่อนชำระใหม่
- */
+// เพิ่มรายการผ่อนชำระใหม่
 function addInstallment() {
   const name = document.getElementById('instName').value.trim();
   const total = parseFloat(document.getElementById('instTotal').value);
@@ -1129,7 +1038,7 @@ function addInstallment() {
   if (!name || isNaN(total) || isNaN(monthly) || isNaN(terms) || terms < 1) return showToast('กรอกข้อมูลให้ครบ');
   if (paid > terms) return showToast('งวดที่จ่ายเกินจำนวนงวด');
 
-  App.state.installments.push({ id: Date.now(), name, total, monthly, terms, type: App.state.instTab, date, note, paidTerms: paid, payments: [] });
+  window.installments.push({ id: Date.now(), name, total, monthly, terms, type: instTab, date, note, paidTerms: paid, payments: [] });
   saveLocalStorage();
   ['instName', 'instTotal', 'instMonthly', 'instTerms', 'instNote'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('instPaid').value = '0';
@@ -1137,25 +1046,19 @@ function addInstallment() {
   showToast('เพิ่มรายการแล้ว');
 }
 
-/**
- * ลบรายการผ่อนชำระ
- * @param {*} id
- */
+// ลบรายการผ่อนชำระ
 async function deleteInstallment(id) {
-  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการผ่อนนี้?')) {
-    App.state.installments = App.state.installments.filter(i => i.id !== id);
+  if (await confirmDelete('คุณแน่ใจว่าต้องการลบรายการผ่อนนี้?')) {
+    window.installments = window.installments.filter(i => i.id !== id);
     saveLocalStorage();
     renderInstallment();
     showToast('ลบแล้ว');
   }
 }
 
-/**
- * เปิดป๊อปอัปสำหรับจ่ายค่างวด
- * @param {*} id
- */
+// เปิดป๊อปอัปสำหรับจ่ายค่างวด
 function openInstPayModal(id) {
-  const inst = App.state.installments.find(i => i.id === id);
+  const inst = window.installments.find(i => i.id === id);
   if (!inst) return;
   const remTerms = inst.terms - inst.paidTerms;
   document.getElementById('instPayId').value = id;
@@ -1168,22 +1071,18 @@ function openInstPayModal(id) {
   document.getElementById('instPayModalBg').classList.add('open');
 }
 
-/**
- * ปิดป๊อปอัปจ่ายค่างวด
- */
+// ปิดป๊อปอัปจ่ายค่างวด
 function closeInstPayModal() { document.getElementById('instPayModalBg').classList.remove('open'); }
 
-/**
- * บันทึกการจ่ายค่างวด
- */
+// บันทึกการจ่ายค่างวด
 function saveInstPay() {
   const id = parseInt(document.getElementById('instPayId').value);
   const qty = parseInt(document.getElementById('instPayQty').value);
   const date = document.getElementById('instPayDate').value || today;
   const note = document.getElementById('instPayNote').value.trim();
-  const walletId = parseInt(document.getElementById('instPayWallet').value) || (App.state.wallets[0]?.id || 1);
+  const walletId = parseInt(document.getElementById('instPayWallet').value) || (window.wallets[0]?.id || 1);
   if (isNaN(qty) || qty < 1) return showToast('กรุณากรอกจำนวนงวด');
-  const inst = App.state.installments.find(i => i.id === id);
+  const inst = window.installments.find(i => i.id === id);
   if (!inst) return;
   const remTerms = inst.terms - inst.paidTerms;
   if (qty > remTerms) return showToast(`จ่ายได้สูงสุด ${remTerms} งวด`);
@@ -1193,7 +1092,7 @@ function saveInstPay() {
   const amount = qty * inst.monthly;
   inst.payments.push({ id: now, qty, amount, date, note });
 
-  App.state.items.push({
+  window.items.push({
     id: now,
     name: `ผ่อนชำระ: ${inst.name} (งวดที่ ${inst.paidTerms})`,
     amount,
@@ -1211,21 +1110,20 @@ function saveInstPay() {
   renderSearchList();
   update();
   renderWalletPage();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast(`บันทึกจ่าย ${qty} งวดแล้ว`);
 }
 
-/**
- * วาดหน้าสินเชื่อ (ลิสต์รายการผ่อนทั้งหมด)
- */
+// วาดหน้าสินเชื่อ (ลิสต์รายการผ่อนทั้งหมด)
 function renderInstallment() {
-  const insts = App.state.installments || [];
+  const insts = window.installments || [];
   let phoneRem = 0, paynextRem = 0;
   insts.forEach(inst => { const rem = (inst.terms - inst.paidTerms) * inst.monthly; if (rem > 0) inst.type === 'phone' ? phoneRem += rem : paynextRem += rem; });
   document.getElementById('instPhoneTotal').innerText = phoneRem.toLocaleString() + ' ฿';
   document.getElementById('instPaynextTotal').innerText = paynextRem.toLocaleString() + ' ฿';
-  const filtered = insts.filter(i => i.type === App.state.instTab);
-  document.getElementById('instListHeader').innerText = App.state.instTab === 'phone' ? `ผ่อนมือถือ (${filtered.length})` : `PayNext (${filtered.length})`;
+  const filtered = insts.filter(i => i.type === instTab);
+  document.getElementById('instListHeader').innerText = instTab === 'phone' ? `ผ่อนมือถือ (${filtered.length})` : `PayNext (${filtered.length})`;
   const container = document.getElementById('instList');
   if (!filtered.length) { container.innerHTML = '<div class="empty">— ยังไม่มีรายการ —</div>'; return; }
 
@@ -1252,89 +1150,71 @@ function renderInstallment() {
   }).join('');
 }
 
-/**
- * ------------------------------------------------------------
- * 13) หน้าหมวดหมู่ (Category)
- * ------------------------------------------------------------
- * สลับแท็บรายรับ/รายจ่ายในหน้าหมวดหมู่
- * @param {*} type
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 13) หน้าหมวดหมู่ (Category)
+// ------------------------------------------------------------
+// สลับแท็บรายรับ/รายจ่ายในหน้าหมวดหมู่
 function setCatTab(type, el) {
-  App.state.catTab = type;
+  catTab = type;
   document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   renderCatList();
 }
 
-/**
- * เพิ่มหมวดหมู่ใหม่
- */
+// เพิ่มหมวดหมู่ใหม่
 function addCategory() {
   const name = document.getElementById('catNameInput').value.trim();
   if (!name) return showToast('กรุณากรอกชื่อหมวด');
-  if (App.state.categories[App.state.catTab].includes(name)) return showToast('มีหมวดนี้แล้ว');
-  App.state.categories[App.state.catTab].push(name);
+  if (window.categories[catTab].includes(name)) return showToast('มีหมวดนี้แล้ว');
+  window.categories[catTab].push(name);
   saveLocalStorage();
   document.getElementById('catNameInput').value = '';
   renderCatList();
-  updateCategoryDropdown(App.state.currentMode, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
-/**
- * ลบหมวดหมู่
- * @param {*} type
- * @param {*} name
- */
+// ลบหมวดหมู่
 async function deleteCategory(type, name) {
   if (DEFAULT_DATA.categories[type].includes(name)) return showToast('ไม่สามารถลบหมวดเริ่มต้น');
-  if (!await showConfirmModal(`คุณแน่ใจว่าต้องการลบหมวด "${name}"?`)) return;
-  App.state.categories[type] = App.state.categories[type].filter(c => c !== name);
+  if (!await confirmDelete(`คุณแน่ใจว่าต้องการลบหมวด "${name}"?`)) return;
+  window.categories[type] = window.categories[type].filter(c => c !== name);
   saveLocalStorage();
   renderCatList();
-  updateCategoryDropdown(App.state.currentMode, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
 }
 
-/**
- * รีเซ็ตหมวดหมู่กลับเป็นค่าเริ่มต้น
- */
+// รีเซ็ตหมวดหมู่กลับเป็นค่าเริ่มต้น
 async function resetCategories() {
   if (!await showConfirmModal('รีเซ็ตหมวดหมู่ทั้งหมดกลับเป็นค่าเริ่มต้น? หมวดที่เพิ่มไว้จะหายไป', false)) return;
-  App.state.categories = {
+  window.categories = {
     income: [...DEFAULT_DATA.categories.income],
     expense: [...DEFAULT_DATA.categories.expense]
   };
   saveLocalStorage();
   renderCatList();
-  updateCategoryDropdown(App.state.currentMode, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
   showToast('รีเซ็ตหมวดแล้ว');
 }
 
-/**
- * วาดลิสต์หมวดหมู่ในหน้าหมวดหมู่
- */
+// วาดลิสต์หมวดหมู่ในหน้าหมวดหมู่
 function renderCatList() {
   const el = document.getElementById('catList');
   if (!el) return;
-  const cats = App.state.categories[App.state.catTab] || [];
+  const cats = window.categories[catTab] || [];
   if (!cats.length) { el.innerHTML = '<div class="empty">— ยังไม่มีหมวดหมู่ —</div>'; return; }
   el.innerHTML = cats.map(c => `
     <div class="cat-item">
-      <span>${escapeHtml(c)}${DEFAULT_DATA.categories[App.state.catTab].includes(c) ? '<span class="ci-default">default</span>' : ''}</span>
-      <button class="btn-cat-del" onclick="deleteCategory('${App.state.catTab}','${escapeHtml(c)}')">✕</button>
+      <span>${escapeHtml(c)}${DEFAULT_DATA.categories[catTab].includes(c) ? '<span class="ci-default">default</span>' : ''}</span>
+      <button class="btn-cat-del" onclick="deleteCategory('${catTab}','${escapeHtml(c)}')">✕</button>
     </div>`).join('');
 }
 
-/**
- * ------------------------------------------------------------
- * 14) หน้าลิสต์ทูเพย์ (Bills)
- * ------------------------------------------------------------
- * สลับโหมดรายรับ/รายจ่ายในฟอร์มหน้าลิสต์ทูเพย์ (บิล)
- * @param {*} mode
- * @param {*} el
- */
+// ------------------------------------------------------------
+// 14) หน้าลิสต์ทูเพย์ (Bills)
+// ------------------------------------------------------------
+// สลับโหมดรายรับ/รายจ่ายในฟอร์มหน้าลิสต์ทูเพย์ (บิล)
 function setBillMode(mode, el) {
-  App.state.currentBillMode = mode;
+  currentBillMode = mode;
   const scope = document.querySelectorAll('#billModeToggle .mode-btn');
   scope.forEach(btn => btn.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -1350,21 +1230,19 @@ function setBillMode(mode, el) {
   updateCategoryDropdown(mode, 'billCategorySelect');
 }
 
-/**
- * เพิ่มรายการที่ต้องจ่ายใหม่ (บิลค้างจ่าย)
- */
+// เพิ่มรายการที่ต้องจ่ายใหม่ (บิลค้างจ่าย)
 function addBill() {
   const name = document.getElementById('billName').value.trim();
   const amount = parseFloat(document.getElementById('billAmount').value);
   const dueDate = document.getElementById('billDueDate').value;
   const category = document.getElementById('billCategorySelect').value;
-  const walletId = parseInt(document.getElementById('billWalletSelect').value) || (App.state.wallets[0]?.id || 1);
+  const walletId = parseInt(document.getElementById('billWalletSelect').value) || (window.wallets[0]?.id || 1);
   const repeatMonthly = document.getElementById('billRepeatMonthly').checked;
-  const type = App.state.currentBillMode || 'expense';
+  const type = currentBillMode || 'expense';
 
   if (!name || isNaN(amount) || amount <= 0) return showToast('กรอกข้อมูลให้ครบถ้วน');
 
-  App.state.bills.push({
+  window.bills.push({
     id: Date.now(),
     name,
     amount,
@@ -1386,32 +1264,26 @@ function addBill() {
   showToast('เพิ่มรายการแล้ว');
 }
 
-/**
- * ลบรายการที่ต้องจ่าย (ต้องกดยืนยันก่อน)
- * @param {*} id
- */
+// ลบรายการที่ต้องจ่าย (ต้องกดยืนยันก่อน)
 async function deleteBill(id) {
-  if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
-    App.state.bills = App.state.bills.filter(b => b.id !== id);
+  if (await confirmDelete('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
+    window.bills = window.bills.filter(b => b.id !== id);
     saveLocalStorage();
     renderBillsPage();
     showToast('ลบแล้ว');
   }
 }
 
-/**
- * กดปุ่ม "จ่ายแล้ว/ได้รับแล้ว": สร้างรายการจริง + ถ้าเป็นบิลรายเดือนให้เลื่อนวันครบกำหนดไปเดือนหน้า
- * @param {*} id
- */
+// กดปุ่ม "จ่ายแล้ว/ได้รับแล้ว": สร้างรายการจริง + ถ้าเป็นบิลรายเดือนให้เลื่อนวันครบกำหนดไปเดือนหน้า
 async function markBillPaid(id) {
-  const bill = App.state.bills.find(b => b.id === id);
+  const bill = window.bills.find(b => b.id === id);
   if (!bill) return;
   const type = bill.type || 'expense'; // ข้อมูลเก่าก่อนมี field type ให้ถือเป็นรายจ่าย
   const verb = type === 'income' ? 'ได้รับ' : 'จ่าย';
   if (!await showConfirmModal(`ยืนยันว่า${verb} "${bill.name}" (${bill.amount.toLocaleString()} ฿) แล้ว?`, false)) return;
 
   // บันทึกเป็นรายการจริงในหน้าแรก
-  App.state.items.push({
+  window.items.push({
     id: Date.now(),
     name: bill.name,
     amount: bill.amount,
@@ -1436,22 +1308,19 @@ async function markBillPaid(id) {
 
   saveLocalStorage();
   renderBillsPage();
-  renderList();
-  renderSearchList();
   update();
   renderWalletPage();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   showToast(type === 'income' ? 'บันทึกรายรับแล้ว' : 'บันทึกการจ่ายแล้ว');
 }
 
-/**
- * วาดหน้าลิสต์ทูเพย์: เติม dropdown หมวดหมู่/บัญชี แล้วแสดงลิสต์เรียงจากที่บันทึกล่าสุด
- */
+// วาดหน้าลิสต์ทูเพย์: เติม dropdown หมวดหมู่/บัญชี แล้วแสดงลิสต์เรียงจากที่บันทึกล่าสุด
 function renderBillsPage() {
-  updateCategoryDropdown(App.state.currentBillMode || 'expense', 'billCategorySelect');
+  updateCategoryDropdown(currentBillMode || 'expense', 'billCategorySelect');
   const walletSelect = document.getElementById('billWalletSelect');
   if (walletSelect) {
-    walletSelect.innerHTML = (App.state.wallets || []).map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+    walletSelect.innerHTML = (window.wallets || []).map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
   }
 
   const listDiv = document.getElementById('billList');
@@ -1459,7 +1328,7 @@ function renderBillsPage() {
   if (!listDiv || !listHeader) return;
 
   // เรียงตามลำดับบันทึกล่าสุดก่อน (id มาก = เพิ่งบันทึก)
-  const sorted = [...App.state.bills].sort((a, b) => b.id - a.id);
+  const sorted = [...window.bills].sort((a, b) => b.id - a.id);
 
   if (sorted.length === 0) {
     listHeader.innerText = 'ยังไม่มีรายการ';
@@ -1472,7 +1341,8 @@ function renderBillsPage() {
     const type = b.type || 'expense';
     const isIncome = type === 'income';
     const isPaid = b.status === 'paid';
-    const isOverdue = !isPaid && b.dueDate < today; // เลยวันครบกำหนดแล้วและยังไม่ทำรายการ
+    const billReminderOn = window.appSettings ? window.appSettings.billReminder !== false : true;
+    const isOverdue = billReminderOn && !isPaid && b.dueDate < today; // เลยวันครบกำหนดแล้วและยังไม่ทำรายการ (เคารพการตั้งค่าแจ้งเตือน)
     const dateColor = isPaid ? 'var(--muted)' : (isOverdue ? 'var(--red)' : 'var(--text)');
     const doneLabel = isIncome ? 'ได้รับแล้ว' : 'จ่ายแล้ว';
     const actionLabel = isIncome ? 'รับแล้ว' : 'จ่ายแล้ว';
@@ -1483,7 +1353,7 @@ function renderBillsPage() {
           <div class="meta" style="color:${dateColor}">${formatBillDate(b.dueDate)} · ${escapeHtml(b.category)}${isPaid ? ` · ${doneLabel}` : (isOverdue ? ' · เลยกำหนด' : '')}</div>
         </div>
         <div class="item-right">
-          <div class="amount">${isIncome ? '+' : '-'}${b.amount.toLocaleString()}</div>
+          <div class="amount">${isIncome ? '+' : '-'}${formatMoney(b.amount)}</div>
           <div style="display:flex;gap:0.3rem;">
             ${isPaid ? '' : `<button class="btn-neon" style="padding:4px 8px;font-size:0.75rem;" onclick="markBillPaid(${b.id})">${actionLabel}</button>`}
             <button class="btn-del" onclick="deleteBill(${b.id})">✕</button>
@@ -1493,15 +1363,13 @@ function renderBillsPage() {
   }).join('');
 }
 
-/**
- * ------------------------------------------------------------
- * 15) หน้าสรุป/แดชบอร์ด (Summary)
- * ------------------------------------------------------------
- * วาดหน้าแดชบอร์ด (กราฟ + สรุปทั้งหมด)
- */
+// ------------------------------------------------------------
+// 15) หน้าสรุป/แดชบอร์ด (Summary)
+// ------------------------------------------------------------
+// วาดหน้าแดชบอร์ด (กราฟ + สรุปทั้งหมด)
 function render() {
   const month = document.getElementById('sumMonthSelect').value || today.slice(0, 7);
-  const items = App.state.items || [];
+  const items = window.items || [];
   const monthItems = items.filter(i => i.date.startsWith(month));
   let inc = 0, exp = 0;
   monthItems.forEach(i => { if (i.type === 'income') inc += i.amount; else exp += i.amount; });
@@ -1522,8 +1390,8 @@ function render() {
 
   renderBar('expenseBar', monthItems, 'expense');
   renderBar('incomeBar', monthItems, 'income');
-  drawBar(monthItems, App.state.chartBarType);
-  drawDonut(monthItems, App.state.chartDonutType);
+  drawBar(monthItems, chartBarType);
+  drawDonut(monthItems, chartDonutType);
 
   const topExp = [...monthItems.filter(i => i.type === 'expense')].sort((a, b) => b.amount - a.amount).slice(0, 5);
   const topExpEl = document.getElementById('topExpense');
@@ -1532,12 +1400,7 @@ function render() {
   }
 }
 
-/**
- * วาดกราฟแท่งแยกตามหมวดหมู่
- * @param {*} elId
- * @param {*} monthItems
- * @param {*} type
- */
+// วาดกราฟแท่งแยกตามหมวดหมู่
 function renderBar(elId, monthItems, type) {
   const filtered = monthItems.filter(i => i.type === type);
   const catMap = new Map();
@@ -1550,11 +1413,9 @@ function renderBar(elId, monthItems, type) {
   el.innerHTML = sorted.map(([cat, amt]) => `<div class="bar-row"><div class="bar-label">${escapeHtml(cat)}</div><div class="bar-track"><div class="bar-fill ${type}" style="width:${total ? (amt / total * 100).toFixed(1) : 0}%"></div></div><div class="bar-val">${amt.toLocaleString()}</div></div>`).join('');
 }
 
-/**
- * เติมตัวเลือกเดือนใน dropdown ของหน้าแดชบอร์ด
- */
+// เติมตัวเลือกเดือนใน dropdown ของหน้าแดชบอร์ด
 function initMonthSelect() {
-  const items = App.state.items || [];
+  const items = window.items || [];
   const months = [...new Set(items.map(i => i.date.slice(0, 7)))].sort().reverse();
   const thisMonth = today.slice(0, 7);
   if (!months.includes(thisMonth)) months.unshift(thisMonth);
@@ -1565,11 +1426,7 @@ function initMonthSelect() {
   sel.value = curVal && months.includes(curVal) ? curVal : thisMonth;
 }
 
-/**
- * รวมยอดเงินแยกตามหมวดหมู่ สำหรับทำกราฟ
- * @param {*} monthItems
- * @param {*} type
- */
+// รวมยอดเงินแยกตามหมวดหมู่ สำหรับทำกราฟ
 function getCatData(monthItems, type) {
   const filtered = monthItems.filter(i => i.type === type);
   const catMap = new Map();
@@ -1577,42 +1434,30 @@ function getCatData(monthItems, type) {
   return [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 }
 
-/**
- * สลับแท็บกราฟแท่ง (รายรับ/รายจ่าย)
- * @param {*} type
- * @param {*} el
- */
+// สลับแท็บกราฟแท่ง (รายรับ/รายจ่าย)
 function setChartTab(type, el) {
-  App.state.chartBarType = type;
+  chartBarType = type;
   document.querySelectorAll('#page-summary .chart-wrap:first-of-type .chart-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   const month = document.getElementById('sumMonthSelect').value || today.slice(0, 7);
-  const items = App.state.items || [];
+  const items = window.items || [];
   const monthItems = items.filter(i => i.date.startsWith(month));
   drawBar(monthItems, type);
 }
 
-/**
- * สลับแท็บกราฟโดนัท (รายรับ/รายจ่าย)
- * @param {*} type
- * @param {*} el
- */
+// สลับแท็บกราฟโดนัท (รายรับ/รายจ่าย)
 function setDonutTab(type, el) {
-  App.state.chartDonutType = type;
+  chartDonutType = type;
   const wraps = document.querySelectorAll('#page-summary .chart-wrap');
   if (wraps[1]) wraps[1].querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   const month = document.getElementById('sumMonthSelect').value || today.slice(0, 7);
-  const items = App.state.items || [];
+  const items = window.items || [];
   const monthItems = items.filter(i => i.date.startsWith(month));
   drawDonut(monthItems, type);
 }
 
-/**
- * วาดกราฟแท่งลงบน canvas
- * @param {*} monthItems
- * @param {*} type
- */
+// วาดกราฟแท่งลงบน canvas
 function drawBar(monthItems, type) {
   const canvas = document.getElementById('barCanvas');
   if (!canvas) return;
@@ -1667,11 +1512,7 @@ function drawBar(monthItems, type) {
   });
 }
 
-/**
- * วาดกราฟโดนัทลงบน canvas
- * @param {*} monthItems
- * @param {*} type
- */
+// วาดกราฟโดนัทลงบน canvas
 function drawDonut(monthItems, type) {
   const canvas = document.getElementById('donutCanvas');
   if (!canvas) return;
@@ -1743,51 +1584,106 @@ function drawDonut(monthItems, type) {
   }
 }
 
-/**
- * ------------------------------------------------------------
- * 16) หน้าตั้งค่า & จัดการข้อมูล (Settings)
- * ------------------------------------------------------------
- * อัปเดตสถิติที่แสดงในหน้าตั้งค่า
- */
+// ------------------------------------------------------------
+// 16) หน้าตั้งค่า & จัดการข้อมูล (Settings)
+// ------------------------------------------------------------
+// อัปเดตสถิติที่แสดงในหน้าตั้งค่า
 function renderSettingsPage() {
   const itemCountEl = document.getElementById('settingsItemCount');
   const walletCountEl = document.getElementById('settingsWalletCount');
-  if (itemCountEl) itemCountEl.textContent = (App.state.items || []).length;
-  if (walletCountEl) walletCountEl.textContent = (App.state.wallets || []).length;
+  if (itemCountEl) itemCountEl.textContent = (window.items || []).length;
+  if (walletCountEl) walletCountEl.textContent = (window.wallets || []).length;
+
+  const s = window.appSettings || DEFAULT_SETTINGS;
+
+  // ปุ่มเลือกธีมสี — ไฮไลต์ธีมที่ใช้อยู่
+  document.querySelectorAll('.theme-swatch').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === s.theme);
+  });
+
+  const confirmDeleteToggle = document.getElementById('settingConfirmDelete');
+  if (confirmDeleteToggle) confirmDeleteToggle.checked = s.confirmDelete !== false;
+
+  const billReminderToggle = document.getElementById('settingBillReminder');
+  if (billReminderToggle) billReminderToggle.checked = s.billReminder !== false;
+
+  const currencyToggle = document.getElementById('settingCurrencySymbol');
+  if (currencyToggle) currencyToggle.checked = !!s.showCurrencySymbol;
+
+  const dateFormatSelect = document.getElementById('settingDateFormat');
+  if (dateFormatSelect) dateFormatSelect.value = s.dateFormat || 'long';
 }
 
-/**
- * ล้างข้อมูลทั้งหมดในแอป (ต้องกดยืนยันก่อน)
- */
+// เปลี่ยนธีมสีของแอป แล้วบันทึก + รีเฟรชหน้าตั้งค่าให้ swatch ไฮไลต์ถูกต้อง
+function setThemeChoice(theme) {
+  window.appSettings.theme = theme;
+  applyTheme(theme);
+  saveLocalStorage();
+  renderSettingsPage();
+}
+
+// เปิด/ปิด "ยืนยันก่อนลบทุกครั้ง"
+function toggleConfirmDelete(checked) {
+  window.appSettings.confirmDelete = checked;
+  saveLocalStorage();
+}
+
+// เปิด/ปิด "ไฮไลต์บิลที่เลยกำหนดในหน้าลิสต์ทูเพย์"
+function toggleBillReminder(checked) {
+  window.appSettings.billReminder = checked;
+  saveLocalStorage();
+  renderBillsPage();
+}
+
+// เปิด/ปิด "แสดงสัญลักษณ์ ฿ ต่อท้ายยอดเงิน"
+function toggleCurrencySymbol(checked) {
+  window.appSettings.showCurrencySymbol = checked;
+  saveLocalStorage();
+  renderList();
+  renderSearchList();
+  renderBillsPage();
+}
+
+// เปลี่ยนรูปแบบการแสดงวันที่ทั่วทั้งแอป
+function setDateFormat(mode) {
+  window.appSettings.dateFormat = mode;
+  saveLocalStorage();
+  renderList();
+  renderSearchList();
+  renderBillsPage();
+}
+
+// ล้างข้อมูลทั้งหมดในแอป (ต้องกดยืนยันก่อน)
 async function clearAll() {
-  if (App.state.items.length && await showConfirmModal('ล้างข้อมูลทั้งหมด?')) {
-    App.state.items = [];
+  if (window.items.length && await confirmDelete('ล้างข้อมูลทั้งหมด?')) {
+    window.items = [];
     saveLocalStorage();
     renderList();
     renderSearchList();
     update();
     renderWalletPage();
-    refreshWalletFilterBars();
+    renderWalletFilterBar('walletFilterBar', 'walletFilter');
+    renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
     showToast('ล้างข้อมูลแล้ว');
   }
 }
 
-/**
- * ------------------------------------------------------------
- * 17) เริ่มต้นแอป (App Init)
- * ------------------------------------------------------------
- * จุดเริ่มต้นของแอป: โหลดข้อมูลแล้ววาดหน้าจอครั้งแรก
- */
+// ------------------------------------------------------------
+// 17) เริ่มต้นแอป (App Init)
+// ------------------------------------------------------------
+// จุดเริ่มต้นของแอป: โหลดข้อมูลแล้ววาดหน้าจอครั้งแรก
 function initApp() {
   loadLocalStorage();
+  applyTheme(window.appSettings.theme);
 
   displayCurrentDate();
 
-  updateCategoryDropdown(App.state.currentMode, 'categorySelect');
+  updateCategoryDropdown(currentMode, 'categorySelect');
   updateCategoryDropdown('income', 'editCategory');
 
   updateWalletDropdowns();
-  refreshWalletFilterBars();
+  renderWalletFilterBar('walletFilterBar', 'walletFilter');
+  renderWalletFilterBar('walletFilterBarSearch', 'walletFilterSearch');
   renderList();
   renderSearchList();
   update();
@@ -1819,17 +1715,17 @@ function initApp() {
     confirmBg.addEventListener('click', e => {
       if (e.target === confirmBg) {
         confirmBg.classList.remove('open');
-        if (App.state.confirmResolver) { App.state.confirmResolver(false); App.state.confirmResolver = null; }
+        if (confirmResolver) { confirmResolver(false); confirmResolver = null; }
       }
     });
   }
   document.getElementById('confirmYesBtn')?.addEventListener('click', () => {
     document.getElementById('confirmModalBg').classList.remove('open');
-    if (App.state.confirmResolver) { App.state.confirmResolver(true); App.state.confirmResolver = null; }
+    if (confirmResolver) { confirmResolver(true); confirmResolver = null; }
   });
   document.getElementById('confirmNoBtn')?.addEventListener('click', () => {
     document.getElementById('confirmModalBg').classList.remove('open');
-    if (App.state.confirmResolver) { App.state.confirmResolver(false); App.state.confirmResolver = null; }
+    if (confirmResolver) { confirmResolver(false); confirmResolver = null; }
   });
 
   document.getElementById('editType')?.addEventListener('change', function() {
@@ -1839,8 +1735,8 @@ function initApp() {
   const searchInput = document.getElementById('searchInputPage');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
-      clearTimeout(App.state.searchDebounceTimer);
-      App.state.searchDebounceTimer = setTimeout(renderSearchList, 300);
+      clearTimeout(window.searchDebouncePage);
+      window.searchDebouncePage = setTimeout(renderSearchList, 300);
     });
     searchInput.addEventListener('focus', function() { this.select(); });
   }

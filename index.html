@@ -2,14 +2,14 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Cash-Flow</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<!-- ===========================================================
+<!-- ============================================================
      HEADER
      ============================================================ -->
 <header class="app-header">
@@ -39,7 +39,7 @@
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span class="sidebar-title">💰 เมนู</span>
-<button class="sidebar-close" onclick="closeMenu()" aria-label="ปิดเมนู">✕</button>
+    <button class="sidebar-close" onclick="closeMenu()" aria-label="ปิดเมนู">✕</button>
   </div>
   <div class="sidebar-nav">
     <button class="sidebar-btn active" onclick="showPage('page-home',this)"><span class="nav-icon">🏠</span> หน้าหลัก</button>
@@ -134,14 +134,14 @@
     </div>
     <div class="note-toggle">
       <button type="button" id="noteToggleBtn" onclick="toggleNoteInput()">📝 หมายเหตุ</button>
-      <input type="text" id="noteInput" class="u-hidden" placeholder="พิมพ์หมายเหตุที่นี่" onkeydown="if(event.key==='Enter') addItem()" />
+      <input type="text" id="noteInput" placeholder="พิมพ์หมายเหตุที่นี่" style="display:none;" onkeydown="if(event.key==='Enter') addItem()" />
     </div>
   </div>
 
   <div class="toolbar">
     <button class="btn-tool" onclick="downloadXLSX()">⬇️ ส่งออก XLSX</button>
     <button class="btn-tool" onclick="document.getElementById('fileInput').click()">⬆️ นำเข้า XLSX</button>
-    <input type="file" id="fileInput" class="u-hidden" accept=".xlsx,.xls" onchange="importXLSX(event)" />
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="importXLSX(event)" />
     <button class="btn-tool" onclick="clearAll()">🗑️ ล้างข้อมูล</button>
     <button class="btn-tool" onclick="showPage('page-search',this)">🔍 ค้นหา</button>
   </div>
@@ -325,7 +325,7 @@
   <div class="section-title">สถานะหนี้ (ทุกเดือน)</div>
   <div class="balance-row">
     <span class="sb-label">ยอดค้างทั้งหมด (ยืม − คืน)</span>
-    <span class="sb-amount" id="summaryLoanRemain">0 ฿</span>
+    <span class="sb-amount" id="summaryLoanRemain" style="color:var(--red)">0 ฿</span>
   </div>
 </div>
 
@@ -336,7 +336,7 @@
   <div class="page-title">Budget</div>
   <div class="page-sub">รายการที่ต้องทำ (รับ/จ่าย) — เรียงตามที่บันทึกล่าสุด</div>
   <div class="cp-form">
-    <div class="mode-toggle u-mb-8" id="billModeToggle">
+    <div class="mode-toggle" id="billModeToggle" style="margin-bottom:8px;">
       <button type="button" class="mode-btn income" data-mode="income" onclick="setBillMode('income', this)">รายรับ</button>
       <button type="button" class="mode-btn expense active" data-mode="expense" onclick="setBillMode('expense', this)">รายจ่าย</button>
     </div>
@@ -350,8 +350,8 @@
     <select id="billCategorySelect"><option value="">-- หมวดหมู่ --</option></select>
     <label for="billWalletSelect" class="sr-only">บัญชีที่จะจ่าย</label>
     <select id="billWalletSelect"></select>
-    <label class="checkbox-label">
-      <input type="checkbox" id="billRepeatMonthly" class="checkbox-input" /> ทำซ้ำทุกเดือน
+    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:var(--muted);">
+      <input type="checkbox" id="billRepeatMonthly" style="width:auto;" /> ทำซ้ำทุกเดือน
     </label>
     <button class="btn-neon" onclick="addBill()">เพิ่มรายการ</button>
   </div>
@@ -385,22 +385,62 @@
 <div class="page" id="page-settings">
   <div class="page-title">ตั้งค่า</div>
   <div class="page-sub">ข้อมูลแอปและการจัดการข้อมูล</div>
-  <div class="s-card u-mb-10">
+  <div class="s-card" style="margin-bottom:10px;">
     <div class="sc-label">Cash-Flow</div>
-    <div class="settings-desc">แอปบันทึกรายรับ-รายจ่ายส่วนตัว</div>
-    <div class="settings-stats-row">
+    <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">แอปบันทึกรายรับ-รายจ่ายส่วนตัว</div>
+    <div style="display:flex;gap:16px;margin-top:10px;">
       <div>
-        <div class="settings-stat-label">รายการทั้งหมด</div>
-        <div id="settingsItemCount" class="settings-stat-value">0</div>
+        <div style="font-size:0.6rem;color:var(--muted);">รายการทั้งหมด</div>
+        <div id="settingsItemCount" style="font-size:1rem;font-weight:700;color:var(--gold);">0</div>
       </div>
       <div>
-        <div class="settings-stat-label">กระเป๋าเงิน</div>
-        <div id="settingsWalletCount" class="settings-stat-value">0</div>
+        <div style="font-size:0.6rem;color:var(--muted);">กระเป๋าเงิน</div>
+        <div id="settingsWalletCount" style="font-size:1rem;font-weight:700;color:var(--gold);">0</div>
       </div>
     </div>
   </div>
+  <div class="section-title">ธีมสี</div>
+  <div class="theme-swatch-row" style="margin-bottom:16px;">
+    <button type="button" class="theme-swatch" data-theme="light" onclick="setThemeChoice('light')" title="สว่าง">
+      <span class="theme-dot" style="background:#f0f4fa;border:1px solid #d0d8e2;"></span>สว่าง
+    </button>
+    <button type="button" class="theme-swatch" data-theme="dark" onclick="setThemeChoice('dark')" title="มืด">
+      <span class="theme-dot" style="background:#12161f;border:1px solid #2a2f3a;"></span>มืด
+    </button>
+    <button type="button" class="theme-swatch" data-theme="green" onclick="setThemeChoice('green')" title="เขียว">
+      <span class="theme-dot" style="background:#0f1a14;"></span>เขียว
+    </button>
+    <button type="button" class="theme-swatch" data-theme="blue" onclick="setThemeChoice('blue')" title="น้ำเงิน">
+      <span class="theme-dot" style="background:#0e1420;"></span>น้ำเงิน
+    </button>
+  </div>
+
+  <div class="section-title">ทั่วไป</div>
+  <div class="s-card" style="margin-bottom:16px;display:flex;flex-direction:column;gap:12px;">
+    <label class="setting-toggle-row">
+      <span>ยืนยันก่อนลบทุกครั้ง</span>
+      <input type="checkbox" id="settingConfirmDelete" onchange="toggleConfirmDelete(this.checked)">
+    </label>
+    <label class="setting-toggle-row">
+      <span>แจ้งเตือนบิลที่เลยกำหนด (หน้าลิสต์ทูเพย์)</span>
+      <input type="checkbox" id="settingBillReminder" onchange="toggleBillReminder(this.checked)">
+    </label>
+    <label class="setting-toggle-row">
+      <span>แสดงสัญลักษณ์ ฿ ต่อท้ายยอดเงิน</span>
+      <input type="checkbox" id="settingCurrencySymbol" onchange="toggleCurrencySymbol(this.checked)">
+    </label>
+    <label class="setting-toggle-row">
+      <span>รูปแบบวันที่</span>
+      <select id="settingDateFormat" onchange="setDateFormat(this.value)" style="width:auto;">
+        <option value="long">Fri 24 Jul 2026</option>
+        <option value="thai">24/07/2026</option>
+        <option value="iso">2026-07-24</option>
+      </select>
+    </label>
+  </div>
+
   <div class="section-title">จัดการข้อมูล</div>
-  <div class="toolbar u-mb-16">
+  <div class="toolbar" style="margin-bottom:16px;">
     <button class="btn-tool" onclick="exportForChat()">⬇️ คัดลอกข้อมูลสำรอง</button>
     <button class="btn-tool" onclick="document.getElementById('fileInput').click()">📥 นำเข้าจาก Excel</button>
     <button class="btn-tool" onclick="clearAll()">🗑️ ล้างรายการทั้งหมด</button>
@@ -448,12 +488,12 @@
 
 <!-- Confirm Modal -->
 <div class="modal-bg" id="confirmModalBg">
-  <div class="modal modal-confirm">
-    <h2 id="confirmTitle">ยืนยันการดำเนินการ</h2>
-    <p id="confirmMessage" class="confirm-message"></p>
+  <div class="modal" style="max-width:340px;">
+    <h2 id="confirmTitle" style="color:var(--red);">ยืนยันการดำเนินการ</h2>
+    <p id="confirmMessage" style="margin:1rem 0;font-size:0.95rem;line-height:1.5;color:var(--text);word-break:break-word;"></p>
     <div class="modal-btns">
       <button class="btn-cancel" id="confirmNoBtn">ยกเลิก</button>
-      <button class="btn-save" id="confirmYesBtn">ยืนยัน</button>
+      <button class="btn-save" id="confirmYesBtn" style="border-color:var(--red) !important;color:var(--red);">ยืนยัน</button>
     </div>
   </div>
 </div>
@@ -463,6 +503,9 @@
      ============================================================ -->
 <div class="toast" id="toast"></div>
 
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
 <script src="script.js" defer></script>
 </body>
 </html>
