@@ -23,7 +23,7 @@
 // ------------------------------------------------------------
 // 1) ค่าคงที่ & สถานะเริ่มต้นของระบบ
 // ------------------------------------------------------------
-const STORAGE_KEY = 'cashflow_datacenter';
+const STORAGE_KEY = 'DataCenter_Cashflow';
 
 // สถานะข้อมูลหลักของแอป (โหลดจาก localStorage ตอนเริ่มทำงาน)
 window.items = [];          // รายการรายรับ/รายจ่ายทั้งหมด
@@ -185,7 +185,7 @@ function showConfirmModal(message, isDanger = true) {
       title.style.color = 'var(--red)';
       yesBtn.style.borderColor = 'var(--red) !important';
       yesBtn.style.color = 'var(--red)';
-      title.innerText = '⚠️ ยืนยันการลบ';
+      title.innerText = '⚠ ยืนยันการลบ';
     } else {
       title.style.color = 'var(--gold)';
       yesBtn.style.borderColor = 'var(--gold-dim) !important';
@@ -427,7 +427,7 @@ function toggleNoteInput() {
   } else {
     input.style.display = 'none';
     input.value = '';
-    btn.textContent = '📝 หมายเหตุ';
+    btn.textContent = 'หมายเหตุ';
   }
 }
 
@@ -591,9 +591,9 @@ function openEdit(id) {
   document.getElementById('editId').value = id;
   document.getElementById('editDate').value = item.date;
   document.getElementById('editName').value = item.name;
-  document.getElementById('editNote').value = item.note || '';
   document.getElementById('editAmount').value = item.amount;
   document.getElementById('editType').value = item.type;
+  document.getElementById('editNote').value = item.note || '';
 
   updateWalletDropdowns();
   updateCategoryDropdown(item.type, 'editCategory', item.category);
@@ -651,15 +651,16 @@ function downloadCSV() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
 
-  const header = 'วันที่,รายการ,จำนวนเงิน,หมวดหมู่,ประเภท,หมายเหตุ';
+  const header = 'วันที่,รายการ,จำนวนเงิน,หมวดหมู่,ประเภท,บัญชี,หมายเหตุ';
   const rows = window.items.map(i => {
     const date = formatDate(i.date);
     const name = `"${i.name.replace(/"/g, '""')}"`;
     const amount = i.amount;
     const category = `"${(i.category || '').replace(/"/g, '""')}"`;
     const type = i.type === 'income' ? 'รายรับ' : 'รายจ่าย';
+    const wallet = `"${(i.wallet ||'').replace(/"/g,'""')}"`;
     const note = `"${(i.note || '').replace(/"/g, '""')}"`;
-    return `${date},${name},${amount},${category},${type},${note}`;
+    return `${date},${name},${amount},${category},${type},${wallet},${note}`;
   });
 
   const csv = '\uFEFF' + header + '\n' + rows.join('\n');
@@ -678,17 +679,24 @@ function downloadXLSX() {
     return;
   }
 
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
   try {
     const rows = window.items.map(item => {
       const wallet = window.wallets.find(w => w.id === item.walletId);
       return {
-        'วันที่': item.date || '',
+        'วันที่': formatDate(item.date),
         'รายการ': item.name || '',
         'จำนวน': item.amount || 0,
         'หมวดหมู่': item.category || '',
         'ประเภท': item.type === 'income' ? 'รายรับ' : 'รายจ่าย',
-        'หมายเหตุ': item.note || '',
-        'บัญชี': wallet ? wallet.name : ''
+        'บัญชี': wallet ? wallet.name : '',
+        'หมายเหตุ': item.note || ''
       };
     });
 
@@ -732,7 +740,7 @@ function importXLSX(event) {
         const note = row['หมายเหตุ'] || '';
         let date = today;
         if (row['วันที่']) {
-          const d = String(row['วันที่']).split('-');
+          const d = String(row['วันที่']).split('/');
           if (d.length === 3) {
             date = `${d[0]}-${d[1].padStart(2, '0')}-${d[2].padStart(2, '0')}`;
           }
@@ -773,7 +781,7 @@ function importXLSX(event) {
 // รวมข้อมูลทั้งหมดเป็น JSON สำหรับส่งออก/แชร์
 function exportForChat() {
   const payload = {
-    source: 'budgetCtrl',
+    source: 'DataCenter_Cashflow',
     exportedAt: new Date().toISOString(),
     items: window.items || [],
     wallets: window.wallets || [],
@@ -799,7 +807,7 @@ function exportForChat() {
   };
 
   doCopy().then(() => {
-    showToast('คัดลอกข้อมูลแล้ว ไปวางใน OPS//CHAT ได้เลย');
+    showToast('คัดลอกข้อมูลแล้ว');
   }).catch(() => {
     showExportFallback(json);
   });
@@ -911,7 +919,7 @@ function renderWalletPage() {
       const bal = getWalletBalance(w.id);
       const txCount = window.items.filter(i => i.walletId === w.id).length;
       return `<div class="wallet-card">
-        <div><div class="wc-name">💲 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init || 0).toLocaleString()} ฿</div></div>
+        <div><div class="wc-name"💼 ${escapeHtml(w.name)}</div><div class="wc-meta">${txCount} รายการ · ยอดเริ่ม ${(w.init || 0).toLocaleString()} ฿</div></div>
         <div style="display:flex;align-items:center;gap:0.7rem">
           <div class="wc-bal" style="color:${bal >= 0 ? 'var(--gold)' : 'var(--red)'}">${bal.toLocaleString()} ฿</div>
           ${wallets.length > 1 ? `<button class="btn-wallet-del" onclick="deleteWallet(${w.id})">✕</button>` : ''}
@@ -987,7 +995,7 @@ function renderLoan() {
     if (!filtered.length) {
       document.getElementById('loanList').innerHTML = `
         <div class="empty-state" style="padding:2rem;text-align:center;color:var(--muted);">
-          <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
+          <div style="font-size:2rem;margin-bottom:0.5rem;">✔</div>
           <div style="font-size:0.9rem;">ไม่มีหนี้ค้าง — ทุกคนเคลียร์แล้ว!</div>
         </div>`;
       return;
@@ -998,7 +1006,7 @@ function renderLoan() {
       const pct = data.borrow > 0 ? Math.min((data.repay / data.borrow) * 100, 100).toFixed(0) : 100;
       const rows = [...data.txns].sort((a, b) => b.date.localeCompare(a.date)).map(t => `
         <div class="person-txn-row">
-          <span>${t.ltype === 'borrow' ? '📥 ยืม' : '📤 คืน'}</span>
+          <span>${t.ltype === 'borrow' ? 'ยืม' : 'คืน'}</span>
           <span>${escapeHtml(t.date)}</span>
           <span style="color:${t.ltype === 'borrow' ? 'var(--red)' : 'var(--green)'}">${t.ltype === 'borrow' ? '+' : '-'}${t.amount.toLocaleString()} ฿</span>
         </div>`).join('');
@@ -1752,7 +1760,7 @@ function initApp() {
     }, 200);
   });
 
-  console.log(' Budget//Ctrl พร้อมใช้งาน (Homepage ปรับโหมดแล้ว)');
+  console.log('CashFlow(พร้อมใช้งานแล้ว)');
 }
 
 initApp();

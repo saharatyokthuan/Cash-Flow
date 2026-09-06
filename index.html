@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th-TH,us-US">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Cash-Flow</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -19,7 +19,48 @@
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
     </button>
-    <a href="#" class="brand-logo" onclick="event.preventDefault(); showPage('page-home', document.querySelector('.nav-btn'))">💰</a>
+    <a href="#" class="brand-logo" onclick="event.preventDefault(); showPage('page-home', document.querySelector('.nav-btn'))">
+    <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns=" ">
+      <svg xmlns="http://w3.org" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- ถุงเงินและเชือกผูก -->
+  <path d="M256,152c-15.3,0-28.7-10.4-32.3-25.3c-1.3-5.3-6-9.1-11.5-9.1h-4.3c-15,0-27.1-12.2-27.1-27.1c0-11,6.5-20.9,16.5-25.3c14.2-6.2,30.3-3.1,41.2,7.7c6,6,14.2,9.3,22.6,9.3h10c8.4,0,16.6-3.3,22.6-9.3c10.9-10.9,27-14,41.2-7.7c10,4.4,16.5,14.3,16.5,25.3c0,15-12.2,27.1-27.1,27.1h-4.3c-5.5,0-10.2,3.8-11.5,9.1C309.7,141.6,296.3,152,256,152z" fill="none" stroke="#efcf07" stroke-width="20" stroke-miterlimit="10"/>
+  <path d="M192,152c0,0-50,22-68,64c-22,51.3-16,134,18,186c32,49,74,54,114,54s82-5,114-54c34-52,40-134.7,18-186c-18-42-68-64-68-64" fill="none" stroke="#efcf07" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="256" cy="152" rx="56" ry="14" fill="none" stroke="#efcf07" stroke-width="20"/>
+  
+  <!-- สัญลักษณ์ดอลลาร์ ($) ตรงกลาง -->
+  <text x="256" y="325" font-family="Arial, Helvetica, sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#efcf07">$</text>
+</svg>
+<!--  พื้นหลังวงกลม 
+      <circle cx="25" cy="25" r="23" fill="rgba(239, 207, 7, 0.08)" stroke="#efcf07" stroke-width="1.5" stroke-opacity="0.5"/>
+      
+      <!-- เหรียญเงิน 
+      <circle cx="25" cy="22" r="8" fill="rgba(239, 207, 7, 0.15)" stroke="#efcf07" stroke-width="2" stroke-opacity="0.9"/>
+      
+      <!-- สัญลักษณ์บาท 
+      <text x="25" y="26" text-anchor="middle" fill="#efcf07" font-size="9" font-weight="bold" font-family="Arial, sans-serif">฿</text>
+      
+      <!-- ลูกศรขึ้น (รายรับ) 
+      <path d="M25 12 L29 16" stroke="#2dd4a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M25 12 L21 16" stroke="#2dd4a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M25 12 L25 7" stroke="#2dd4a7" stroke-width="2" stroke-linecap="round"/>
+      
+      <!-- ลูกศรลง (รายจ่าย) 
+      <path d="M25 32 L29 36" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M25 32 L21 36" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M25 32 L25 37" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+      
+      <!-- จุดประกาย 
+      <circle cx="35" cy="15" r="1.5" fill="#efcf07">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="15" cy="15" r="1.5" fill="#efcf07">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      
+      <!-- เส้นกราฟ 
+      <path d="M18 30 L22 26 L26 28 L32 22" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6" fill="none"/>
+    </svg> -->
+</a>
     <div class="header-titles">
       <span onclick="showPage('page-home', document.querySelector('.nav-btn'))" class="app-title">Financial Record</span>
       <span id="CurrentDate" class="app-subtitle"></span>
@@ -109,7 +150,7 @@
         <label>โหมด</label>
         <div class="mode-toggle" id="homeModeToggle">
           <button type="button" class="mode-btn income active" data-mode="income" onclick="setMode('income', this)">รายรับ</button>
-          <button type="button" class="mode-btn expense" data-mode="expense" onclick="setMode('expense', this)">รายจ่าย</button>
+          <button type="button" class="mode-btn expense active" data-mode="expense" onclick="setMode('expense', this)">รายจ่าย</button>
         </div>
       </div>
       <div class="form-group category-group">
@@ -441,7 +482,7 @@
 
   <div class="section-title">จัดการข้อมูล</div>
   <div class="toolbar" style="margin-bottom:16px;">
-    <button class="btn-tool" onclick="exportForChat()">⬇️ คัดลอกข้อมูลสำรอง</button>
+    <button class="btn-tool" onclick="exportForChat()">⬇คัดลอก(Json)</button>
     <button class="btn-tool" onclick="document.getElementById('fileInput').click()">📥 นำเข้าจาก Excel</button>
     <button class="btn-tool" onclick="clearAll()">🗑️ ล้างรายการทั้งหมด</button>
   </div>
@@ -506,6 +547,6 @@
 <!-- ============================================================
      JAVASCRIPT
      ============================================================ -->
-<script src="script.js" defer></script>
+<script src="script.js" defer ></script>
 </body>
 </html>
