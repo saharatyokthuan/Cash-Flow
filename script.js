@@ -24,28 +24,24 @@
 // 1) ค่าคงที่ & สถานะเริ่มต้นของระบบ
 // ------------------------------------------------------------
 const STORAGE_KEY = 'DataCenter_Cashflow';
-
-// สถานะข้อมูลหลักของแอป (โหลดจาก localStorage ตอนเริ่มทำงาน)
-window.items = [];          // รายการรายรับ/รายจ่ายทั้งหมด
-window.wallets = [];        // กระเป๋าเงิน/บัญชีทั้งหมด
-window.installments = [];   // รายการผ่อนชำระทั้งหมด
-window.categories = {};     // หมวดหมู่ แยกตาม income/expense
-window.bills = [];          // รายการในหน้าลิสต์ทูเพย์ (รายรับ/รายจ่ายที่ยังไม่เกิดขึ้นจริง)
-
-window.walletFilter = 'all';        // ตัวกรองกระเป๋าเงินของหน้าแรก
-window.walletFilterSearch = 'all';  // ตัวกรองกระเป๋าเงินของหน้าค้นหา
-window.editTargetId = null;         // id ของรายการที่กำลังแก้ไขอยู่ (ถ้ามี)
-
-let filter = 'all';         // ตัวกรองประเภทรายการของหน้าแรก
-let filterSearch = 'all';   // ตัวกรองประเภทรายการของหน้าค้นหา
-let currentMode = 'income';       // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าแรก
-let currentBillMode = 'expense';  // โหมดรายรับ/รายจ่าย ที่เลือกอยู่ในฟอร์มหน้าลิสต์ทูเพย์
-let chartBarType = 'expense';     // ประเภทข้อมูลที่แสดงในกราฟแท่ง (หน้าสรุป)
-let chartDonutType = 'expense';   // ประเภทข้อมูลที่แสดงในกราฟโดนัท (หน้าสรุป)
-let confirmResolver = null;       // ตัวรับผลลัพธ์ของป๊อปอัปยืนยัน (resolve ของ Promise)
-let loanDisplayMode = 'person';   // มุมมองหน้ายืมเงิน: แยกตามคน/แสดงเป็นลิสต์
-let instTab = 'phone';            // แท็บที่เลือกอยู่ในหน้าผ่อนชำระ
-let catTab = 'income';            // แท็บที่เลือกอยู่ในหน้าหมวดหมู่
+window.items = [];
+window.wallets = [];
+window.installments = [];
+window.categories = {};
+window.bills = [];
+window.walletFilter = 'all';
+window.walletFilterSearch = 'all';
+window.editTargetId = null;
+let filter = 'all';
+let filterSearch = 'all';
+let currentMode = 'income';
+let currentBillMode = 'expense';
+let chartBarType = 'expense';
+let chartDonutType = 'expense';
+let confirmResolver = null;
+let loanDisplayMode = 'person';
+let instTab = 'phone';
+let catTab = 'income';
 
 // ค่าเริ่มต้นของการตั้งค่าแอป (แก้ไขได้จากหน้า Settings)
 const DEFAULT_SETTINGS = {
