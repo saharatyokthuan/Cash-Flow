@@ -11,11 +11,14 @@
   --r:14px; --shadow:0 6px 22px rgba(0,0,0,.45);
 }
   
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;
+margin:0;padding:0;
+-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
   background:radial-gradient(900px 500px at 50% -80px,#17203a 0%,var(--bg) 60%);
-  color:var(--text);font-family:"Noto Sans Thai","Segoe UI",system-ui,sans-serif;
+  color:var(--text);
+  font-family:"BBH Bogle";
   font-size:15px;line-height:1.5;padding-bottom:84px;
 }
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -257,7 +260,7 @@ canvas{width:100%;display:block}
   .form-row{flex-direction:column} .date-group{flex:1}
 }
 /*
-.active
+.active  #FFC94D,#4DA3FF
 .amber
 .amount-group
 .app-header
