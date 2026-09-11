@@ -80,7 +80,39 @@ function openSidebar(){ $('sidebar')?.classList.add('active'); document.querySel
 function closeSidebar(){ $('sidebar')?.classList.remove('active'); document.querySelector('.sidebar-overlay')?.classList.remove('active'); }
 function toggleSidebar(){ $('sidebar')?.classList.contains('active') ? closeSidebar() : openSidebar(); }
 
+function toggleMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.querySelector('.hamburger-btn');
+  const isOpen = sidebar.classList.contains('open');
+
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    btn.classList.add('active');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+// ปิดเมนู sidebar
+function closeMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.querySelector('.hamburger-btn');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('open');
+  btn.classList.remove('active');
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+
 /* ---------- selects ---------- */
+
 function fillSelect(sel, arr, valKey, txtKey, placeholder){
   if(!sel) return;
   const cur = sel.value;
@@ -705,7 +737,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 /* expose for inline onclick */
-Object.assign(window,{showPage,setMode,addItem,toggleNoteInput,downloadXLSX,importXLSX,clearAll,
+
+Object.assign(  window,{showPage,setMode,addItem,toggleNoteInput,downloadXLSX,importXLSX,clearAll,
   setFilter,setWalletFilter,setSearchWalletFilter,openEdit,deleteItem,closeModal,saveEdit,
   addWallet,deleteWallet,doTransfer,setCatTab,addCategory,deleteCategory,resetCategories,
   setLoanTab,setInstTab,addInstallment,deleteInst,openInstPay,closeInstPayModal,saveInstPay,
