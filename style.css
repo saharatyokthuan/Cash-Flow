@@ -18,7 +18,8 @@ html,body{height:100%}
 body{
   background:radial-gradient(900px 500px at 50% -80px,#17203a 0%,var(--bg) 60%);
   color:var(--text);
-  font-family:"BBH Bogle";
+  font-family:"Niramit";
+  font-weight: 700;
   font-size:15px;line-height:1.5;padding-bottom:84px;
 }
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
