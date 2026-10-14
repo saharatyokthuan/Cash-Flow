@@ -29,6 +29,8 @@ const fmtDate = d => {
   const [y,m,dd] = d.split('-');
   return `${dd}/${m}/${(+y+543).toString().slice(-2)}`;
 };
+const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g,
+  m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 function save(){ localStorage.setItem(KEY, JSON.stringify(db)); }
 function load(){
@@ -80,34 +82,25 @@ function openSidebar(){ $('sidebar')?.classList.add('active'); document.querySel
 function closeSidebar(){ $('sidebar')?.classList.remove('active'); document.querySelector('.sidebar-overlay')?.classList.remove('active'); }
 function toggleSidebar(){ $('sidebar')?.classList.contains('active') ? closeSidebar() : openSidebar(); }
 
-function toggleMenu() {
+function toggleMenu(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
   const btn = document.querySelector('.hamburger-btn');
-  const isOpen = sidebar.classList.contains('open');
-
-  if (isOpen) {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('open');
-    btn.classList.remove('active');
-    btn.setAttribute('aria-expanded', 'false');
-  } else {
-    sidebar.classList.add('open');
-    overlay.classList.add('open');
-    btn.classList.add('active');
-    btn.setAttribute('aria-expanded', 'true');
-  }
+  if(!sidebar) return;
+  const isOpen = sidebar.classList.contains('active');
+  sidebar.classList.toggle('active', !isOpen);
+  overlay?.classList.toggle('active', !isOpen);
+  btn?.classList.toggle('active', !isOpen);
+  btn?.setAttribute('aria-expanded', String(!isOpen));
 }
 
 // ปิดเมนู sidebar
-function closeMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
+function closeMenu(){
+  document.getElementById('sidebar')?.classList.remove('active');
+  document.getElementById('sidebarOverlay')?.classList.remove('active');
   const btn = document.querySelector('.hamburger-btn');
-  sidebar.classList.remove('open');
-  overlay.classList.remove('open');
-  btn.classList.remove('active');
-  btn.setAttribute('aria-expanded', 'false');
+  btn?.classList.remove('active');
+  btn?.setAttribute('aria-expanded', 'false');
 }
 
 
@@ -116,8 +109,12 @@ function closeMenu() {
 function fillSelect(sel, arr, valKey, txtKey, placeholder){
   if(!sel) return;
   const cur = sel.value;
-  sel.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '')
-    + arr.map(o => `<option value="${valKey?o[valKey]:o}">${txtKey?o[txtKey]:o}</option>`).join('');
+  sel.innerHTML = (placeholder ? `<option value="">${escapeHTML(placeholder)}</option>` : '')
+    + arr.map(o => {
+        const v = valKey ? o[valKey] : o;
+        const t = txtKey ? o[txtKey] : o;
+        return `<option value="${escapeHTML(v)}">${escapeHTML(t)}</option>`;
+      }).join('');
   if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
 }
 function refreshSelects(){
@@ -173,8 +170,9 @@ function setFilter(f, el){
 function walletName(id){ return (db.wallets.find(w=>w.id===id)||{}).name || '-'; }
 
 function renderTotals(){
-  const inc = db.items.filter(i=>i.type==='income').reduce((s,i)=>s+i.amount,0);
-  const exp = db.items.filter(i=>i.type==='expense').reduce((s,i)=>s+i.amount,0);
+  const notTransfer = i => i.category !== 'โอนเงิน';
+  const inc = db.items.filter(i=>i.type==='income'  && notTransfer(i)).reduce((s,i)=>s+i.amount,0);
+  const exp = db.items.filter(i=>i.type==='expense' && notTransfer(i)).reduce((s,i)=>s+i.amount,0);
   const init = db.wallets.reduce((s,w)=>s+(Number(w.init)||0),0);
   if($('totalIncome'))  $('totalIncome').textContent  = money(inc);
   if($('totalExpense')) $('totalExpense').textContent = money(exp);
@@ -186,8 +184,8 @@ function itemRow(it){
   const col  = it.type==='income' ? 'green' : 'red';
   return `<div class="item ${it.type}">
     <div class="item-left">
-      <div class="item-name">${it.name}</div>
-      <div class="item-meta">${fmtDate(it.date)} · ${it.category} · ${walletName(it.wallet)}${it.note?' · '+it.note:''}</div>
+      <div class="item-name">${escapeHTML(it.name)}</div>
+      <div class="item-meta">${fmtDate(it.date)} · ${escapeHTML(it.category)} · ${escapeHTML(walletName(it.wallet))}${it.note?' · '+escapeHTML(it.note):''}</div>
     </div>
     <div class="item-amount ${col}">${sign}${money(it.amount)}</div>
     <div class="item-actions">
@@ -201,12 +199,12 @@ function renderWalletBar(){
   const bar = document.querySelector('#page-home .wallet-bar');
   if(bar){
     bar.innerHTML = [{id:'all',name:'ทั้งหมด'},...db.wallets].map(w=>
-      `<button class="chip ${ui.walletFilter===w.id?'active':''}" onclick="setWalletFilter('${w.id}')">${w.name}</button>`).join('');
+      `<button class="chip ${ui.walletFilter===w.id?'active':''}" onclick="setWalletFilter('${w.id}')">${escapeHTML(w.name)}</button>`).join('');
   }
   const sBar = $('walletFilterBarSearch');
   if(sBar){
     sBar.innerHTML = [{id:'all',name:'ทั้งหมด'},...db.wallets].map(w=>
-      `<button class="chip ${ui.searchWalletFilter===w.id?'active':''}" onclick="setSearchWalletFilter('${w.id}')">${w.name}</button>`).join('');
+      `<button class="chip ${ui.searchWalletFilter===w.id?'active':''}" onclick="setSearchWalletFilter('${w.id}')">${escapeHTML(w.name)}</button>`).join('');
   }
 }
 function setWalletFilter(id){ ui.walletFilter=id; renderWalletBar(); renderList(); }
@@ -277,10 +275,11 @@ function walletBalance(id){
 }
 function deleteWallet(id){
   if(db.wallets.length<=1) return toast('ต้องมีอย่างน้อย 1 บัญชี','err');
-  const w = db.wallets.find(x=>x.id===id);
+  const w = db.wallets.find(x=>x.id===id); if(!w) return;
   askConfirm('ลบบัญชี', `ลบ "${w.name}" และรายการทั้งหมดในบัญชีนี้?`, ()=>{
     db.wallets = db.wallets.filter(x=>x.id!==id);
     db.items   = db.items.filter(i=>i.wallet!==id);
+    db.bills   = db.bills.filter(b=>b.wallet!==id);
     save(); renderAll(); toast('ลบบัญชีแล้ว','ok');
   });
 }
@@ -290,7 +289,7 @@ function renderWallets(){
     const b = walletBalance(w.id);
     return `<div class="item">
       <div class="item-left">
-        <div class="item-name">💳 ${w.name}</div>
+        <div class="item-name">💳 ${escapeHTML(w.name)}</div>
         <div class="item-meta">ยอดตั้งต้น ${money(w.init)} ฿</div>
       </div>
       <div class="item-amount ${b>=0?'green':'red'}">${money(b)}</div>
@@ -341,9 +340,9 @@ function renderCats(){
   box.innerHTML = list.length ? list.map(c=>{
     const used = db.items.filter(i=>i.category===c && i.type===ui.catTab).length;
     return `<div class="item ${ui.catTab}">
-      <div class="item-left"><div class="item-name">${c}</div>
+      <div class="item-left"><div class="item-name">${escapeHTML(c)}</div>
       <div class="item-meta">ใช้ไป ${used} รายการ</div></div>
-      <div class="item-actions"><button class="icon-btn del" onclick="deleteCategory('${c}')">🗑️</button></div>
+      <div class="item-actions"><button class="icon-btn del" data-cat="${escapeHTML(c)}" onclick="deleteCategory(this.dataset.cat)">🗑️</button></div>
     </div>`;
   }).join('') : '<div class="empty">ยังไม่มีหมวดหมู่</div>';
 }
@@ -378,7 +377,7 @@ function renderLoan(){
       const remain = p.b - p.r, pct = p.b ? Math.min(100, p.r/p.b*100) : 0;
       return `<div class="item">
         <div class="item-left" style="width:100%">
-          <div class="item-name">🤝 ${p.name}</div>
+          <div class="item-name">🤝 ${escapeHTML(p.name)}</div>
           <div class="item-meta">ยืม ${money(p.b)} · คืนแล้ว ${money(p.r)}</div>
           <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
         </div>
@@ -431,7 +430,7 @@ function renderInstallments(){
     const pct  = i.terms ? (i.paid/i.terms*100) : 0;
     return `<div class="item">
       <div class="item-left" style="width:100%">
-        <div class="item-name">📱 ${i.name} ${left===0?'<span class="badge paid">ครบแล้ว</span>':''}</div>
+        <div class="item-name">📱 ${escapeHTML(i.name)} ${left===0?'<span class="badge paid">ครบแล้ว</span>':''}</div>
         <div class="item-meta">งวดละ ${money(i.monthly)} · จ่ายแล้ว ${i.paid}/${i.terms} งวด · เหลือ ${money(left*i.monthly)} ฿</div>
         <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
@@ -487,13 +486,23 @@ function addBill(){
   $('billName').value=''; $('billAmount').value='';
   save(); renderBills(); toast('เพิ่มบิลแล้ว','ok');
 }
+function addMonth(dateStr, months){
+  const [y,m,d] = String(dateStr).split('-').map(Number);
+  if(!y || !m) return dateStr;
+  const base = new Date(y, (m-1)+months, 1);
+  const lastDay = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+  base.setDate(Math.min(d||1, lastDay));
+  const yy = base.getFullYear();
+  const mm = String(base.getMonth()+1).padStart(2,'0');
+  const dd = String(base.getDate()).padStart(2,'0');
+  return `${yy}-${mm}-${dd}`;
+}
 function payBill(id){
   const b = db.bills.find(x=>x.id===id); if(!b) return;
   db.items.push({id:uid(),date:todayStr(),name:b.name,amount:b.amount,type:b.type,
     category:b.category,wallet:b.wallet,note:'จ่ายจากบิล'});
   if(b.repeat){
-    const d = new Date(b.due); d.setMonth(d.getMonth()+1);
-    b.due = d.toISOString().slice(0,10);
+    b.due = addMonth(b.due, 1);
   }else b.paid = true;
   save(); renderAll(); toast('บันทึกการจ่ายบิลแล้ว','ok');
 }
@@ -512,8 +521,8 @@ function renderBills(){
     const overdue = !b.paid && b.due < today;
     return `<div class="item ${b.type}">
       <div class="item-left">
-        <div class="item-name">${b.name} ${b.paid?'<span class="badge paid">จ่ายแล้ว</span>':overdue?'<span class="badge due">เลยกำหนด</span>':''}</div>
-        <div class="item-meta">ครบกำหนด ${fmtDate(b.due)} · ${b.category}${b.repeat?' · ทำซ้ำทุกเดือน':''}</div>
+        <div class="item-name">${escapeHTML(b.name)} ${b.paid?'<span class="badge paid">จ่ายแล้ว</span>':overdue?'<span class="badge due">เลยกำหนด</span>':''}</div>
+        <div class="item-meta">ครบกำหนด ${fmtDate(b.due)} · ${escapeHTML(b.category)}${b.repeat?' · ทำซ้ำทุกเดือน':''}</div>
       </div>
       <div class="item-amount ${b.type==='income'?'green':'red'}">${money(b.amount)}</div>
       <div class="item-actions">
@@ -564,7 +573,7 @@ function renderSummaryPage(){
     sel.value = ui.sumMonth;
     sel.onchange = () => { ui.sumMonth = sel.value; renderSummaryPage(); };
   }
-  const rows = db.items.filter(i=>monthOf(i.date)===ui.sumMonth);
+  const rows = db.items.filter(i=>monthOf(i.date)===ui.sumMonth && i.category!=='โอนเงิน');
   const inc = rows.filter(i=>i.type==='income').reduce((s,i)=>s+i.amount,0);
   const exp = rows.filter(i=>i.type==='expense').reduce((s,i)=>s+i.amount,0);
   if($('sumIncome'))  $('sumIncome').textContent  = money(inc);
@@ -593,7 +602,7 @@ function drawBar(){
   const cv = $('barCanvas'); if(!cv) return;
   const {ctx,w,h} = prepCanvas(cv,170);
   const months = monthList().slice(0,6).reverse();
-  const vals = months.map(m => db.items.filter(i=>monthOf(i.date)===m && i.type===ui.chartTab)
+  const vals = months.map(m => db.items.filter(i=>monthOf(i.date)===m && i.type===ui.chartTab && i.category!=='โอนเงิน')
                                        .reduce((s,i)=>s+i.amount,0));
   const max = Math.max(...vals,1);
   const pad = 24, bw = (w-pad*1.2)/months.length*0.6, gap = (w-pad*0.4)/months.length;
@@ -604,7 +613,11 @@ function drawBar(){
     const g = ctx.createLinearGradient(0,y,0,h-26);
     g.addColorStop(0,color); g.addColorStop(1,color+'33');
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.roundRect(x,y,bw,Math.max(bh,2),[6,6,0,0]); ctx.fill();
+    const hh = Math.max(bh,2);
+    ctx.beginPath();
+    if(typeof ctx.roundRect === 'function') ctx.roundRect(x,y,bw,hh,[6,6,0,0]);
+    else ctx.rect(x,y,bw,hh);
+    ctx.fill();
     ctx.fillStyle='#8b9ab8'; ctx.font='10px sans-serif'; ctx.textAlign='center';
     ctx.fillText(m.slice(5), x+bw/2, h-10);
     if(vals[idx]) ctx.fillText(Math.round(vals[idx]).toLocaleString(), x+bw/2, y-5);
@@ -614,7 +627,7 @@ function drawBar(){
 function drawDonut(){
   const cv = $('donutCanvas'); if(!cv) return;
   const {ctx,w,h} = prepCanvas(cv,190);
-  const rows = db.items.filter(i=>monthOf(i.date)===ui.sumMonth && i.type===ui.donutTab);
+  const rows = db.items.filter(i=>monthOf(i.date)===ui.sumMonth && i.type===ui.donutTab && i.category!=='โอนเงิน');
   const byCat = {};
   rows.forEach(i=> byCat[i.category]=(byCat[i.category]||0)+i.amount);
   const data = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -641,7 +654,7 @@ function drawDonut(){
   ctx.fillStyle='#8b9ab8'; ctx.font='10px sans-serif'; ctx.fillText('บาท', cx, cy+16);
   if($('donutLegend')) $('donutLegend').innerHTML = data.map(([k,v],idx)=>
     `<div class="lg-row"><span class="lg-dot" style="background:${PALETTE[idx%PALETTE.length]}"></span>
-     <span class="lg-name">${k}</span><span class="lg-val">${money(v)} (${(v/total*100).toFixed(0)}%)</span></div>`).join('');
+     <span class="lg-name">${escapeHTML(k)}</span><span class="lg-val">${money(v)} (${(v/total*100).toFixed(0)}%)</span></div>`).join('');
 }
 
 /* ---------- settings / import / export ---------- */
@@ -675,7 +688,7 @@ function importXLSX(e){
         if(typeof date === 'number') date = new Date(Date.UTC(1899,11,30+date)).toISOString().slice(0,10);
         db.items.push({id:uid(), date:String(date).slice(0,10),
           name:r['รายการ']||r.name||'นำเข้า', amount:amt,
-          type:(r['ประเภท']||r.type)==='รายรับ'?'income':'expense',
+          type:['รายรับ','income'].includes(String(r['ประเภท']||r.type||'').toLowerCase())?'income':'expense',
           category:r['หมวดหมู่']||r.category||'อื่นๆ', wallet:wid, note:r['หมายเหตุ']||''});
         n++;
       });
@@ -687,9 +700,14 @@ function importXLSX(e){
 }
 function exportForChat(){
   const txt = JSON.stringify(db);
-  navigator.clipboard?.writeText(txt)
-    .then(()=>toast('คัดลอกข้อมูลสำรองแล้ว','ok'))
-    .catch(()=>{ prompt('คัดลอกข้อความนี้เก็บไว้:', txt); });
+  const fallback = () => prompt('คัดลอกข้อความนี้เก็บไว้:', txt);
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(txt)
+      .then(()=>toast('คัดลอกข้อมูลสำรองแล้ว','ok'))
+      .catch(fallback);
+  } else {
+    fallback();
+  }
 }
 function clearAll(){
   askConfirm('ล้างรายการทั้งหมด','ข้อมูลรายรับ-รายจ่ายทั้งหมดจะถูกลบถาวร ยืนยันไหม?',()=>{
@@ -709,15 +727,13 @@ function renderAll(){
 /* ---------- init ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   load();
+  renderAll();
   if($('CurrentDate')) $('CurrentDate').textContent =
     new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   if($('dateInput')) $('dateInput').value = todayStr();
   if($('instDate'))  $('instDate').value  = todayStr();
   if($('billDueDate')) $('billDueDate').value = todayStr();
 
-  document.querySelector('.hamburger-btn')?.addEventListener('click', toggleSidebar);
-  document.querySelector('.sidebar-close')?.addEventListener('click', closeSidebar);
-  document.querySelector('.sidebar-overlay')?.addEventListener('click', closeSidebar);
   document.querySelector('.btn-settings')?.addEventListener('click', ()=>showPage('page-settings'));
 
   $('searchInputPage')?.addEventListener('input', renderSearch);
@@ -744,4 +760,3 @@ Object.assign(  window,{showPage,setMode,addItem,toggleNoteInput,downloadXLSX,im
   setLoanTab,setInstTab,addInstallment,deleteInst,openInstPay,closeInstPayModal,saveInstPay,
   setBillMode,addBill,payBill,deleteBill,setChartTab,setDonutTab,exportForChat,
   toggleSidebar,openSidebar,closeSidebar});
-  renderAll();
