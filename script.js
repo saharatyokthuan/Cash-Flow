@@ -22,7 +22,13 @@ let ui = {
 const $  = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const money = n => (Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
-const todayStr = () => new Date().toISOString().slice(0,10);
+const todayStr = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+};
 const monthOf = d => (d||'').slice(0,7);
 const fmtDate = d => {
   if(!d) return '-';
@@ -36,9 +42,16 @@ function save(){ localStorage.setItem(KEY, JSON.stringify(db)); }
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw) db = Object.assign(db, JSON.parse(raw));
+    const parsed = raw ? JSON.parse(raw) : null;
+    if(parsed && typeof parsed === 'object'){
+      ['items','wallets','installments','bills'].forEach(k=>{
+        if(Array.isArray(parsed[k])) db[k] = parsed[k];
+      });
+      if(parsed.cats && Array.isArray(parsed.cats.income) && Array.isArray(parsed.cats.expense))
+        db.cats = parsed.cats;
+    }
   }catch(e){ console.warn('load failed', e); }
-  if(!db.wallets.length) db.wallets = [{id:uid(), name:'เงินสด', init:0}];
+  if(!Array.isArray(db.wallets) || !db.wallets.length) db.wallets = [{id:uid(), name:'เงินสด', init:0}];
   if(!db.cats || !db.cats.income) db.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
 }
 
@@ -189,8 +202,8 @@ function itemRow(it){
     </div>
     <div class="item-amount ${col}">${sign}${money(it.amount)}</div>
     <div class="item-actions">
-      <button class="icon-btn" onclick="openEdit('${it.id}')">✏️</button>
-      <button class="icon-btn del" onclick="deleteItem('${it.id}')">🗑️</button>
+      <button class="icon-btn" onclick="openEdit('${it.id}')" aria-label="แก้ไขรายการ">✏️</button>
+      <button class="icon-btn del" onclick="deleteItem('${it.id}')" aria-label="ลบรายการ">🗑️</button>
     </div>
   </div>`;
 }
@@ -284,6 +297,15 @@ function deleteWallet(id){
   });
 }
 function renderWallets(){
+  const summary = $('walletSummary');
+  if(summary){
+    const totalBal = db.wallets.reduce((s,w)=>s+walletBalance(w.id),0);
+    const totalInit = db.wallets.reduce((s,w)=>s+(Number(w.init)||0),0);
+    summary.innerHTML =
+      `<div class="s-card balance"><div class="sc-label">ยอดรวมทุกบัญชี</div><div class="sc-amount">${money(totalBal)}</div></div>
+       <div class="s-card income"><div class="sc-label">จำนวนบัญชี</div><div class="sc-amount">${db.wallets.length}</div></div>
+       <div class="s-card expense"><div class="sc-label">ยอดตั้งต้นรวม</div><div class="sc-amount">${money(totalInit)}</div></div>`;
+  }
   const box = $('walletList'); if(!box) return;
   box.innerHTML = db.wallets.length ? db.wallets.map(w=>{
     const b = walletBalance(w.id);
@@ -293,7 +315,7 @@ function renderWallets(){
         <div class="item-meta">ยอดตั้งต้น ${money(w.init)} ฿</div>
       </div>
       <div class="item-amount ${b>=0?'green':'red'}">${money(b)}</div>
-      <div class="item-actions"><button class="icon-btn del" onclick="deleteWallet('${w.id}')">🗑️</button></div>
+      <div class="item-actions"><button class="icon-btn del" onclick="deleteWallet('${w.id}')" aria-label="ลบบัญชี">🗑️</button></div>
     </div>`;
   }).join('') : '<div class="empty">ยังไม่มีบัญชี</div>';
 }
@@ -342,7 +364,7 @@ function renderCats(){
     return `<div class="item ${ui.catTab}">
       <div class="item-left"><div class="item-name">${escapeHTML(c)}</div>
       <div class="item-meta">ใช้ไป ${used} รายการ</div></div>
-      <div class="item-actions"><button class="icon-btn del" data-cat="${escapeHTML(c)}" onclick="deleteCategory(this.dataset.cat)">🗑️</button></div>
+      <div class="item-actions"><button class="icon-btn del" data-cat="${escapeHTML(c)}" onclick="deleteCategory(this.dataset.cat)" aria-label="ลบหมวดหมู่">🗑️</button></div>
     </div>`;
   }).join('') : '<div class="empty">ยังไม่มีหมวดหมู่</div>';
 }
@@ -371,6 +393,8 @@ function renderLoan(){
   if($('loanTotalBorrow')) $('loanTotalBorrow').textContent = money(d.borrow);
   if($('loanTotalRepaid')) $('loanTotalRepaid').textContent = money(d.repaid);
   if($('loanTotalRemain')) $('loanTotalRemain').textContent = money(d.borrow - d.repaid);
+  if($('loanListHeader')) $('loanListHeader').innerHTML =
+    `<span>สรุปเงินกู้</span><span>${ui.loanTab==='person' ? d.people.length+' คน' : d.rows.length+' รายการ'}</span>`;
   const box = $('loanList'); if(!box) return;
   if(ui.loanTab === 'person'){
     box.innerHTML = d.people.length ? d.people.map(p=>{
@@ -425,6 +449,8 @@ function renderInstallments(){
   if($('instPaynextTotal')) $('instPaynextTotal').textContent = money(remain(pay));
   const box = $('instList'); if(!box) return;
   const list = ui.instTab==='phone' ? phone : pay;
+  if($('instListHeader')) $('instListHeader').innerHTML =
+    `<span>รายการผ่อน</span><span>${list.length} รายการ</span>`;
   box.innerHTML = list.length ? list.map(i=>{
     const left = Math.max(0, i.terms - i.paid);
     const pct  = i.terms ? (i.paid/i.terms*100) : 0;
@@ -435,8 +461,8 @@ function renderInstallments(){
         <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
       <div class="item-actions">
-        ${left>0?`<button class="icon-btn" onclick="openInstPay('${i.id}')">💸</button>`:''}
-        <button class="icon-btn del" onclick="deleteInst('${i.id}')">🗑️</button>
+        ${left>0?`<button class="icon-btn" onclick="openInstPay('${i.id}')" aria-label="จ่ายงวด">💸</button>`:''}
+        <button class="icon-btn del" onclick="deleteInst('${i.id}')" aria-label="ลบรายการผ่อน">🗑️</button>
       </div>
     </div>`;
   }).join('') : '<div class="empty">ยังไม่มีรายการผ่อน</div>';
@@ -526,8 +552,8 @@ function renderBills(){
       </div>
       <div class="item-amount ${b.type==='income'?'green':'red'}">${money(b.amount)}</div>
       <div class="item-actions">
-        ${b.paid?'':`<button class="icon-btn" onclick="payBill('${b.id}')">✅</button>`}
-        <button class="icon-btn del" onclick="deleteBill('${b.id}')">🗑️</button>
+        ${b.paid?'':`<button class="icon-btn" onclick="payBill('${b.id}')" aria-label="จ่ายบิล">✅</button>`}
+        <button class="icon-btn del" onclick="deleteBill('${b.id}')" aria-label="ลบบิล">🗑️</button>
       </div>
     </div>`;
   }).join('') : '<div class="empty">ยังไม่มีบิล/รายการประจำ</div>';
