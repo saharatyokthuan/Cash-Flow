@@ -29,11 +29,12 @@
 ## 📁 โครงสร้างไฟล์
 
 ```
-cash-flow/
+Cash-Flow/
 ├── index.html      # โครงสร้าง 9 หน้า + 3 modal
 ├── style.css       # ธีมมืดนีออน-ทอง, responsive
 ├── script.js       # ตรรกะทั้งหมด + Canvas charts
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ---
@@ -42,8 +43,8 @@ cash-flow/
 
 ### รันบนเครื่อง
 ```bash
-git clone https://github.com/<your-username>/cash-flow.git
-cd cash-flow
+git clone https://github.com/saharatyokthuan/Cash-Flow.git
+cd Cash-Flow
 ```
 เปิด `index.html` ด้วยเบราว์เซอร์ได้เลย — หรือใช้ dev server เพื่อให้ทำงานได้สมบูรณ์:
 
@@ -56,6 +57,8 @@ python -m http.server 8000
 ### Deploy ฟรี
 รองรับ static hosting ทุกเจ้า — **GitHub Pages**, **Netlify**, **Vercel**, **Cloudflare Pages**
 แค่ push โฟลเดอร์ขึ้นไปก็ใช้งานได้ทันที ไม่ต้อง build
+
+🔗 **ใช้งานออนไลน์:** https://saharatyokthuan.github.io/Cash-Flow/
 
 ---
 
@@ -128,4 +131,4 @@ Chrome / Edge / Firefox / Safari เวอร์ชันใหม่ (ต้อ
 
 ## 📄 License
 
-MIT © 2026
+โปรเจกต์นี้ใช้สัญญาอนุญาต [MIT](LICENSE) © 2026
