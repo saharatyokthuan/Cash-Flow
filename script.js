@@ -38,7 +38,16 @@ const fmtDate = d => {
 const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g,
   m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-function save(){ localStorage.setItem(KEY, JSON.stringify(db)); }
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(db));
+    return true;
+  }catch(err){
+    console.error('บันทึกข้อมูลไม่สำเร็จ:', err);
+    toast('บันทึกข้อมูลไม่สำเร็จ (พื้นที่จัดเก็บเต็มหรือถูกปิดกั้น)', 'err');
+    return false;
+  }
+}
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
