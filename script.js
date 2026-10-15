@@ -575,8 +575,8 @@ function renderSearch(){
   let rows = [...db.items].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
   if(ui.searchWalletFilter!=='all') rows = rows.filter(i=>i.wallet===ui.searchWalletFilter);
   if(q) rows = rows.filter(i =>
-    i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q) ||
-    (i.note||'').toLowerCase().includes(q) || i.date.includes(q));
+    String(i.name||'').toLowerCase().includes(q) || String(i.category||'').toLowerCase().includes(q) ||
+    String(i.note||'').toLowerCase().includes(q) || String(i.date||'').includes(q));
   const sum = rows.reduce((s,i)=> s + (i.type==='income'? i.amount : -i.amount), 0);
   if($('searchListHeader')) $('searchListHeader').innerHTML =
     `<span>พบ ${rows.length} รายการ</span><span class="${sum>=0?'green':'red'}">${money(sum)} ฿</span>`;
@@ -603,7 +603,7 @@ function renderSummaryPage(){
   const sel = $('sumMonthSelect');
   if(sel){
     const ms = monthList();
-    sel.innerHTML = ms.map(m=>`<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = ms.map(m=>`<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join('');
     if(!ui.sumMonth || !ms.includes(ui.sumMonth)) ui.sumMonth = ms[0];
     sel.value = ui.sumMonth;
     sel.onchange = () => { ui.sumMonth = sel.value; renderSummaryPage(); };
