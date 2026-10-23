@@ -5,6 +5,21 @@ const DEFAULT_CATS = {
   income:  ['เงินเดือน','โบนัส','ขายของ','ยืมเงิน','อื่นๆ'],
   expense: ['อาหาร','เดินทาง','ที่พัก','ช้อปปิ้ง','บิล/ค่าน้ำค่าไฟ','คืนเงินกู้','ผ่อนชำระ','อื่นๆ']
 };
+const TEXTS = {
+  income: 'รายรับ',
+  expense: 'รายจ่าย',
+  wallet: 'บัญชี',
+  transfer: 'โอนเงิน',
+  add: 'เพิ่ม',
+  save: 'บันทึก',
+  delete: 'ลบ',
+  search: 'ค้นหา',
+  export: 'สำรอง/นำเข้า',
+  clear: 'ล้างข้อมูล',
+  noData: 'ไม่มีข้อมูล',
+  confirm: 'ยืนยัน',
+  cancel: 'ยกเลิก'
+};
 const PALETTE = ['#ffc94d','#4da3ff','#2fe6a8','#ff5c7a','#a97bff','#ffa53d','#41d6d6','#ff8ab8'];
 
 let db = {
@@ -39,6 +54,10 @@ const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g,
   m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 function save(){
+  // Rate limit: only save if 500ms has passed since last save
+  const now = Date.now();
+  if(now - (save.last || 0) < 500) return save.last || false;
+  save.last = now;
   try{
     localStorage.setItem(KEY, JSON.stringify(db));
     return true;
@@ -62,7 +81,19 @@ function load(){
   }catch(e){ console.warn('load failed', e); }
   if(!Array.isArray(db.wallets) || !db.wallets.length) db.wallets = [{id:uid(), name:'เงินสด', init:0}];
   if(!db.cats || !db.cats.income) db.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+  // Validate that loan categories exist; if not, reset to defaults
+  const loanIncomeCat = db.cats.income.includes('ยืมเงิน');
+  const loanExpenseCat = db.cats.expense.includes('คืนเงินกู้');
+  if(!loanIncomeCat || !loanExpenseCat){
+    askConfirm('หมวดหมู่เงินกู้หายไป', 'หมวด "ยืมเงิน" หรือ "คืนเงินกู้" ไม่มีในข้อมูลของคุณ รีเซ็ตเป็นหมวดเริ่มต้นหรือไม่?', ()=>{
+      db.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+      save();
+      renderLoan();
+      toast('รีเซ็ตหมวดหมู่เงินกู้เรียบร้อยแล้ว','ok');
+    });
+  }
 }
+EOF
 
 function toast(msg, type=''){
   const t = $('toast'); if(!t) return;
@@ -356,8 +387,17 @@ function addCategory(){
   save(); renderCats(); refreshSelects(); toast('เพิ่มหมวดหมู่แล้ว','ok');
 }
 function deleteCategory(name){
-  db.cats[ui.catTab] = db.cats[ui.catTab].filter(c=>c!==name);
-  save(); renderCats(); refreshSelects(); toast('ลบหมวดหมู่แล้ว','ok');
+  // Warn if trying to delete loan-critical categories
+  const isLoanCritical = name === 'ยืมเงิน' || name === 'คืนเงินกู้';
+  if(isLoanCritical){
+    askConfirm('ลบหมวดหมู่เงินกู้', 'การลบ "'+name+'" จะทำให้หน้าเงินกู้แสดงคleanหมด รีเซ็ตหมวดเริ่มต้นหรือไม่?', ()=>{
+      db.cats[ui.catTab] = db.cats[ui.catTab].filter(c=>c!==name);
+      save(); renderCats(); refreshSelects(); toast('ลบหมวดหมู่แล้ว','ok');
+    });
+  }else{
+    db.cats[ui.catTab] = db.cats[ui.catTab].filter(c=>c!==name);
+    save(); renderCats(); refreshSelects(); toast('ลบหมวดหมู่แล้ว','ok');
+  }
 }
 function resetCategories(){
   askConfirm('รีเซ็ตหมวดหมู่','คืนค่าหมวดหมู่เริ่มต้นทั้งหมด?',()=>{
@@ -571,12 +611,16 @@ function renderBills(){
 /* ---------- search ---------- */
 function renderSearch(){
   const box = $('searchList'); if(!box) return;
+  // HiDPI support: adjust list item font size for high-DPI displays
+  const dpr = window.devicePixelRatio || 1;
+  box.style.fontSize = (12 * dpr) + 'px';
   const q = ($('searchInputPage')?.value || '').trim().toLowerCase();
   let rows = [...db.items].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
   if(ui.searchWalletFilter!=='all') rows = rows.filter(i=>i.wallet===ui.searchWalletFilter);
   if(q) rows = rows.filter(i =>
-    String(i.name||'').toLowerCase().includes(q) || String(i.category||'').toLowerCase().includes(q) ||
-    String(i.note||'').toLowerCase().includes(q) || String(i.date||'').includes(q));
+    i.category !== 'โอนเงิน' &&
+    (String(i.name||'').toLowerCase().includes(q) || String(i.category||'').toLowerCase().includes(q) ||
+    String(i.note||'').toLowerCase().includes(q) || String(i.date||'').includes(q)));
   const sum = rows.reduce((s,i)=> s + (i.type==='income'? i.amount : -i.amount), 0);
   if($('searchListHeader')) $('searchListHeader').innerHTML =
     `<span>พบ ${rows.length} รายการ</span><span class="${sum>=0?'green':'red'}">${money(sum)} ฿</span>`;
@@ -721,6 +765,13 @@ function importXLSX(e){
         let wid = (db.wallets.find(w=>w.name===(r['บัญชี']||r.wallet))||db.wallets[0]).id;
         let date = r['วันที่']||r.date||todayStr();
         if(typeof date === 'number') date = new Date(Date.UTC(1899,11,30+date)).toISOString().slice(0,10);
+        // If date is already a valid YYYY-MM-DD string from Excel headers, use it directly
+        // to avoid timezone shift issues in non-UTC timezones
+        else if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Keep as-is, already in correct format
+        } else {
+          date = todayStr();
+        }
         db.items.push({id:uid(), date:String(date).slice(0,10),
           name:r['รายการ']||r.name||'นำเข้า', amount:amt,
           type:['รายรับ','income'].includes(String(r['ประเภท']||r.type||'').toLowerCase())?'income':'expense',
@@ -733,6 +784,35 @@ function importXLSX(e){
   };
   rd.readAsArrayBuffer(f);
 }
+function exportSearch(){
+  const box = $('searchList'); if(!box) return;
+  const q = ($('searchInputPage')?.value || '').trim();
+  let rows = [...db.items].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+  if(q) rows = rows.filter(i=>
+    i.category !== 'โอนเงิน' &&
+    (String(i.name||'').toLowerCase().includes(q) || String(i.category||'').toLowerCase().includes(q) ||
+    String(i.note||'').toLowerCase().includes(q) || String(i.date||'').includes(q)));
+  const sum = rows.reduce((s,i)=> s + (i.type==='income'? i.amount : -i.amount), 0);
+  let txt = 'ผลการค้นหา Cash-Flow\n';
+  txt += '================\n';
+  txt += 'คำค้นหา: ' + (q || 'ทั้งหมด') + '\n';
+  txt += 'พบ ' + rows.length + ' รายการ\n';
+  txt += 'ยอดรวม: ' + money(sum) + ' ฿\n';
+  txt += '================\n';
+  rows.forEach(i=> {
+    const sign = i.type==='income' ? '+' : '-';
+    txt += sign + money(i.amount) + ' | ' + i.type + ' | ' + i.category + ' | ' + i.name + '\n';
+  });
+  const fallback = () => prompt('คัดลอกข้อความนี้เก็บไว้:', txt);
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(txt)
+      .then(()=>toast('ส่งออกผลการค้นหาแล้ว','ok'))
+      .catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
 function exportForChat(){
   const txt = JSON.stringify(db);
   const fallback = () => prompt('คัดลอกข้อความนี้เก็บไว้:', txt);
@@ -780,6 +860,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape'){ closeModal(); closeInstPayModal(); closeConfirm(); closeSidebar(); }
+    if(e.ctrlKey && e.key.toLowerCase() === 'k'){ e.preventDefault(); $('searchInputPage')?.focus(); }
   });
   window.addEventListener('resize', ()=>{ if($('page-summary')?.classList.contains('active')){ drawBar(); drawDonut(); }});
 
